@@ -107,6 +107,48 @@ python3 analysis/resonate_llm_insights.py results/finance_test_clip_insights.jso
 
 The script expects `OPENAI_API_KEY` and writes `results/finance_test_clip_insights_llm_analysis.md`. For a local smoke test only, add `--dry-run`.
 
+## Perseus (code search for agents)
+
+This repo is indexed with [Perseus](https://perseus.computer) so Cursor and other agents can find code by meaning, not just string match.
+
+**One-time install** (macOS/Linux):
+
+```bash
+curl -fsSL https://perseus.computer/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"   # add to ~/.zshrc if needed
+perseus login                          # browser OAuth — enables hosted MCTS search
+```
+
+**Agent rules** (already installed in this repo):
+
+```bash
+perseus rules add      # installs .cursor/rules/perseus.mdc + updates AGENTS.md / CLAUDE.md
+perseus rules status   # check install state
+```
+
+**Index after code changes:**
+
+```bash
+cd /path/to/brain
+perseus index
+```
+
+Without `perseus login`, `perseus index` builds a **local** sqlite index. Query it with `--local`:
+
+```bash
+perseus query --local --no-summary --json "Modal Tribe run_tribe inference"
+```
+
+After login, hosted search uses the full MCTS planner (no `--local`):
+
+```bash
+perseus query "Schaefer atlas modality mapping"
+```
+
+Optional: install the [Perseus GitHub App](https://github.com/apps/perseus-console) on `shah-f/resonate` so pushes auto-index on [perseus.computer](https://perseus.computer).
+
+Docs: [CLI reference](https://perseus.computer/docs/cli) · [Quickstart](https://perseus.computer/docs/quickstart)
+
 ## Operational Notes
 
 - This workspace is a git repo connected to `https://github.com/shah-f/resonate.git`.
