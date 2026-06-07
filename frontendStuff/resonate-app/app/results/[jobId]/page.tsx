@@ -156,7 +156,7 @@ export default function ResultsPage() {
         </div>
 
         <div className="mt-12 max-w-4xl mx-auto">
-          <CreatorFeedback markdown={result.insights.llmMarkdown} />
+          <CreatorFeedback markdown={result.insights.llmMarkdown} creatorInsights={result.insights.creatorInsights} />
           <EvidenceDrawer result={result} />
         </div>
       </main>
