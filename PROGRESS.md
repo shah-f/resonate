@@ -28,6 +28,17 @@ For detailed debugging notes, command outcomes, and exploratory analysis, use `L
 - `modal_test/test_final.py` now preserves those richer fields in JSON and stores key metadata/object arrays in NPZ.
 - This has been syntax-checked locally but not deployed or run on Modal yet.
 
+## Local Analysis Layer
+
+- Added deterministic local analyzer:
+  - `analysis/resonate_analysis.py`
+- It converts saved inference JSON into product-ready insights without Modal or LLM calls.
+- It now includes an `llm_context` evidence packet for later human-facing LLM coaching.
+- Added `analysis/resonate_llm_prompt.py` to create a finance-analysis-style prompt from insights JSON.
+- Added `analysis/resonate_llm_insights.py` to generate markdown creator coaching via OpenAI. Assume `OPENAI_API_KEY` is available; `--dry-run` is only for local smoke tests.
+- Current output path pattern:
+  - `results/<clip>_insights.json`
+
 ## Saved First-Run Analysis
 
 - First-run finance artifacts still exist:

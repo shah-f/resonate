@@ -2,6 +2,22 @@
 
 Detailed notes, debugging records, and exploratory analysis. Keep `PROGRESS.md` limited to critical handoff context.
 
+## 2026-06-07 - Frontend Plan Added
+
+Added:
+
+- `FRONTEND_PLAN.md`
+
+Purpose:
+
+- Give frontend teammates a concrete implementation plan based on the current backend and analysis output.
+- Defines the desired user flow, results page components, API mock shapes, feature cards, LLM markdown rendering, brain/modality visualization expectations, and build priority.
+
+Notes:
+
+- No Modal inference was run.
+- The plan treats old finance analysis as mock data only; future richer backend output should drive deeper diagnostics.
+
 ## 2026-06-07 - Repo Documentation
 
 Added:
@@ -161,6 +177,86 @@ Validation:
 - `python3 modal_test/test_inference.py test_clips/finance_test_clip.mp4`
 
 The finance inference script detected existing artifacts and skipped Modal. No Modal deployment or inference run was performed.
+
+## 2026-06-07 - Local Analysis Layer Added
+
+Added deterministic analysis layer:
+
+- `analysis/resonate_analysis.py`
+
+Purpose:
+
+- Convert saved inference JSON into product-ready structured insights.
+- Avoid Modal calls while iterating on product logic.
+- Avoid LLM dependency for core scoring; an LLM can later rewrite the structured output into friendlier copy.
+
+Computes:
+
+- normalized visual/audio/language tracks
+- combined overall signal
+- hook/middle/close window summaries
+- attention dips and leading dropped modality
+- CTA/payoff window
+- modality balance
+- top rising/falling parcels, using `results/schaefer200_modality_mapping.json` as fallback for parcel names
+- feature-specific cards
+- ranked strongest/weakest moments
+- evidence summary
+- prompt-ready `llm_context`
+- creator-facing insight stubs
+
+Expected command:
+
+```bash
+python3 analysis/resonate_analysis.py results/finance_test_clip.json
+```
+
+Expected output:
+
+- `results/finance_test_clip_insights.json`
+
+Added LLM prompt builder:
+
+- `analysis/resonate_llm_prompt.py`
+
+Purpose:
+
+- Convert an insights JSON file into a markdown prompt that asks an LLM to write analysis in the same style as `results/finance_test_clip_analysis.md`.
+- Still does not call an LLM; it only prepares the prompt/evidence packet.
+
+Expected command:
+
+```bash
+python3 analysis/resonate_llm_prompt.py results/finance_test_clip_insights.json
+```
+
+Expected output:
+
+- `results/finance_test_clip_insights_llm_prompt.md`
+
+Added LLM insight generator:
+
+- `analysis/resonate_llm_insights.py`
+- `requirements.txt`
+
+Behavior:
+
+- Reads an insights JSON file.
+- Reuses the prompt/evidence builder.
+- Calls the OpenAI Responses API through the official `openai` Python package using `OPENAI_API_KEY`.
+- Supports `--dry-run` only as a local smoke test.
+- Saves markdown analysis and a metadata JSON file.
+
+Expected command:
+
+```bash
+python3 analysis/resonate_llm_insights.py results/finance_test_clip_insights.json
+```
+
+Expected outputs:
+
+- `results/finance_test_clip_insights_llm_analysis.md`
+- `results/finance_test_clip_insights_llm_analysis.json`
 
 ## 2026-06-07 - Modal Test Cleanup
 

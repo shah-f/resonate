@@ -47,6 +47,12 @@ Specialized docs:
 
 ## Validation
 
+Install local Python dependencies:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
 Local atlas validation:
 
 ```bash
@@ -74,6 +80,32 @@ python3 modal_test/test_inference.py path/to/video.mp4
 ```
 
 Both inference scripts first check `results/` for an existing `<video_stem>.json` or `<video_stem>.npz` artifact and skip the Modal call if one exists.
+
+Analyze a saved inference result locally without Modal or LLM calls:
+
+```bash
+python3 analysis/resonate_analysis.py results/finance_test_clip.json
+```
+
+This writes `results/finance_test_clip_insights.json`.
+
+The analyzer is deterministic. It produces an `llm_context` evidence packet that can be fed to an LLM later for polished creator-facing coaching.
+
+Build the prompt for that LLM pass:
+
+```bash
+python3 analysis/resonate_llm_prompt.py results/finance_test_clip_insights.json
+```
+
+This writes `results/finance_test_clip_insights_llm_prompt.md`.
+
+Generate the LLM-style creator analysis:
+
+```bash
+python3 analysis/resonate_llm_insights.py results/finance_test_clip_insights.json
+```
+
+The script expects `OPENAI_API_KEY` and writes `results/finance_test_clip_insights_llm_analysis.md`. For a local smoke test only, add `--dry-run`.
 
 ## Operational Notes
 

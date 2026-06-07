@@ -11,6 +11,12 @@ __pycache__/
 .venv/
 venv/
 
+# Node / Next.js (frontend)
+node_modules/
+.next/
+out/
+.vercel/
+
 # IDE / local tooling
 .claude/
 .DS_Store

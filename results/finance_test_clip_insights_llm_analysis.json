@@ -1,0 +1,7 @@
+{
+  "model": "gpt-4o",
+  "dry_run": true,
+  "markdown_path": "results/finance_test_clip_insights_llm_analysis.md",
+  "prompt_chars": 9496,
+  "raw_response": null
+}
