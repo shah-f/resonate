@@ -75,7 +75,7 @@ export type ResonateResult = {
       weakest: Moment[];
     };
     dips: Dip[];
-    ctaWindow: Moment;
+    ctaWindow: Moment & { pctThroughClip?: number; tooLate?: boolean; note?: string };
     modalityBalance: {
       shares: ModalityValues;
       dominant: Modality;
@@ -86,9 +86,12 @@ export type ResonateResult = {
       payoffTiming: FeatureCard;
       modalityBalance: FeatureCard;
       ctaWindow: FeatureCard;
+      hook?: FeatureCard;
     };
     llmMarkdown: string;
     caveats: string[];
+    evidenceSummary?: Record<string, unknown>;
+    creatorInsights?: Array<{ title: string; detail: string }>;
   };
 };
 

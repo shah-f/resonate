@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import type { ResonateResult, JobStatus } from "@/lib/types";
+import { LIBRARY } from "@/lib/library";
 import { ProcessingView } from "@/components/processing-view";
 import { VideoPlayer } from "@/components/video-player";
 import { AttentionTimeline } from "@/components/attention-timeline";
@@ -35,7 +36,8 @@ async function fetchResult(jobId: string): Promise<ResonateResult> {
 export default function ResultsPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const router = useRouter();
-  const isSample = jobId === "sample";
+  const isLibrary = LIBRARY.some((e) => e.slug === jobId);
+  const isSample = jobId === "sample" || isLibrary;
 
   const [currentTime, setCurrentTime] = useState(0);
   const [seekTime, setSeekTime] = useState<number | null>(null);
@@ -139,11 +141,16 @@ export default function ResultsPage() {
             <div className="h-[480px]">
               <BrainVisualization result={result} currentTime={currentTime} />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FeatureCard type="engagementAutopsy" card={result.insights.featureCards.engagementAutopsy} onSeek={handleSeek} />
-              <FeatureCard type="payoffTiming" card={result.insights.featureCards.payoffTiming} onSeek={handleSeek} />
-              <FeatureCard type="modalityBalance" card={result.insights.featureCards.modalityBalance} onSeek={handleSeek} />
-              <FeatureCard type="ctaWindow" card={result.insights.featureCards.ctaWindow} onSeek={handleSeek} />
+            <div className="space-y-4">
+              {result.insights.featureCards.hook && (
+                <FeatureCard type="hook" card={result.insights.featureCards.hook} onSeek={handleSeek} />
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FeatureCard type="engagementAutopsy" card={result.insights.featureCards.engagementAutopsy} onSeek={handleSeek} />
+                <FeatureCard type="payoffTiming" card={result.insights.featureCards.payoffTiming} onSeek={handleSeek} />
+                <FeatureCard type="modalityBalance" card={result.insights.featureCards.modalityBalance} onSeek={handleSeek} />
+                <FeatureCard type="ctaWindow" card={result.insights.featureCards.ctaWindow} onSeek={handleSeek} />
+              </div>
             </div>
           </div>
         </div>

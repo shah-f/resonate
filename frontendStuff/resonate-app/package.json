@@ -2,6 +2,13 @@
   "name": "resonate-app",
   "version": "0.1.0",
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": ["sharp", "unrs-resolver"],
+    "approvedBuilds": [
+      {"name": "sharp", "version": "0.34.5"},
+      {"name": "unrs-resolver", "version": "1.12.2"}
+    ]
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

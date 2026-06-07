@@ -41,3 +41,45 @@
 - Watched Full Video: 30.75%
 - New Followers: 38
 - Average Retention: 70%
+
+## Video 4 -- "Park Walk"
+- Posted: Aug 28, 2025, 7:00 AM
+- Duration: 15.07s
+- Views: 1,009
+- Likes: 98
+- Comments: 5
+- Shares: 0
+- Saves: 2
+- Total Play Time: 1h 33m 41s
+- Average Watch Time: 5.1s
+- Watched Full Video: 8.46%
+- New Followers: 1
+- Average Retention: 34%
+
+## Video 5 -- "Outfit Transition"
+- Posted: Aug 13, 2025, 2:16 PM
+- Duration: 15.00s
+- Views: 1,019
+- Likes: 57
+- Comments: 3
+- Shares: 1
+- Saves: 2
+- Total Play Time: 1h 42m 7s
+- Average Watch Time: 5.6s
+- Watched Full Video: 11.64%
+- New Followers: 0
+- Average Retention: 37%
+
+## Video 6 -- "Green Top"
+- Posted: Sep 17, 2025, 8:19 PM
+- Duration: 10.82s
+- Views: 811
+- Likes: 53
+- Comments: 6
+- Shares: 0
+- Saves: 0
+- Total Play Time: 57m 34s
+- Average Watch Time: 3.9s
+- Watched Full Video: 9.72%
+- New Followers: 1
+- Average Retention: 36%

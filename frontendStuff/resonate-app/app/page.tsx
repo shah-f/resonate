@@ -5,9 +5,13 @@ import { useDropzone } from "react-dropzone";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { UploadCloud, Video, ArrowRight } from "lucide-react";
+import { UploadCloud, Video, ArrowRight, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CosmicBackdrop } from "@/components/cosmic-backdrop";
+import { LIBRARY } from "@/lib/library";
+import type { LibraryEntry } from "@/lib/library";
+
+const MODALITY_ICON: Record<string, string> = { visual: "👁", audio: "🎵", language: "💬" };
 
 export default function Home() {
   const router = useRouter();
@@ -103,14 +107,39 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <div className="text-center">
-          <Button
-            variant="link"
-            className="text-muted-foreground hover:text-white"
-            onClick={() => router.push("/results/sample")}
-          >
-            Or try the sample clip without uploading
-          </Button>
+        <div className="space-y-3">
+          <p className="text-center text-xs label-mono text-muted-foreground tracking-widest uppercase">
+            Or browse pre-analyzed clips
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {LIBRARY.map((entry: LibraryEntry) => (
+              <button
+                key={entry.slug}
+                onClick={() => router.push(`/results/${entry.slug}`)}
+                className="flex items-center gap-3 rounded-xl border border-card-border bg-card/50 hover:bg-card hover:border-primary/40 transition-colors p-3 text-left group"
+              >
+                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-lg shrink-0">
+                  {MODALITY_ICON[entry.dominant] ?? "🎬"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white truncate group-hover:text-primary transition-colors">
+                    {entry.title}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="flex items-center gap-1 text-[0.6rem] label-mono text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {entry.duration}s
+                    </span>
+                    <span className="flex items-center gap-1 text-[0.6rem] label-mono text-muted-foreground">
+                      <Zap className="w-3 h-3" />
+                      {entry.dominant}
+                    </span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

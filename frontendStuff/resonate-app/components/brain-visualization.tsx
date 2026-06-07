@@ -94,11 +94,11 @@ function BrainShell() {
     <group scale={[BRAIN_RADIUS * 1.32, BRAIN_RADIUS * 0.92, BRAIN_RADIUS * 0.94]}>
       {/* Soft inner volume for depth/occlusion */}
       <mesh geometry={geometry} scale={0.985}>
-        <meshBasicMaterial color="#1a0c04" transparent opacity={0.35} side={THREE.BackSide} />
+        <meshBasicMaterial color="#050510" transparent opacity={0.35} side={THREE.BackSide} />
       </mesh>
       {/* Wireframe outline */}
       <mesh geometry={geometry}>
-        <meshBasicMaterial color="#a8703c" wireframe transparent opacity={0.16} toneMapped={false} />
+        <meshBasicMaterial color="#3b82f6" wireframe transparent opacity={0.12} toneMapped={false} />
       </mesh>
     </group>
   );
@@ -226,7 +226,7 @@ function BrainScene({
 function ModalityBars({ result, currentTime, selected }: BrainVisualizationProps & { selected?: Modality }) {
   const timeIndex = getTimeIndex(result.brain.segments, currentTime);
   return (
-    <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-[#0a0603] overflow-hidden">
+    <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-[#0a0a0f] overflow-hidden">
       <div className="text-center space-y-4">
         <div className="flex gap-8 justify-center">
           {MODALITIES.map((mod) => {
@@ -297,7 +297,7 @@ export function BrainVisualization({ result, currentTime }: BrainVisualizationPr
 
   return (
     <div
-      className="w-full h-full min-h-[480px] bg-[#0a0603] rounded-lg border border-card-border overflow-hidden relative"
+      className="w-full h-full min-h-[480px] bg-[#0a0a0f] rounded-lg border border-card-border overflow-hidden relative"
       data-testid="panel-brain-viz"
     >
       {/* Header */}
@@ -330,7 +330,7 @@ export function BrainVisualization({ result, currentTime }: BrainVisualizationPr
             fallback={<ModalityBars result={result} currentTime={currentTime} selected={selectedModality} />}
           >
             <Canvas camera={{ position: [0, 0, 12], fov: 45 }} className="cursor-move">
-              <color attach="background" args={['#0a0603']} />
+              <color attach="background" args={['#0a0a0f']} />
               <ambientLight intensity={0.2} />
               <BrainScene
                 result={result}
@@ -350,7 +350,7 @@ export function BrainVisualization({ result, currentTime }: BrainVisualizationPr
       </div>
 
       {/* Bottom chrome: modality tabs + caption stacked so they never overlap */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center gap-3 px-4 pb-3 pt-8 bg-gradient-to-t from-[#0a0603] via-[#0a0603]/85 to-transparent pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center gap-3 px-4 pb-3 pt-8 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/85 to-transparent pointer-events-none">
         {showTabs && (
           <div className="flex flex-wrap justify-center gap-2 pointer-events-auto">
             {MODALITIES.map((mod) => {
