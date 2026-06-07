@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { insightsToResult } from "@/lib/mock-adapter";
-import mockInsights from "@/lib/mock/insights.json";
+import resonateResult from "@/lib/mock/resonateResult.json";
 
 export async function GET() {
-  const result = insightsToResult(mockInsights);
-  return NextResponse.json(result);
+  return NextResponse.json(resonateResult);
 }

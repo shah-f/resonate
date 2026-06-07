@@ -1,81 +1,156 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import type { ResonateResult } from "@/lib/types";
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
+import type { ResonateResult, JobStatus } from "@/lib/types";
+import { ProcessingView } from "@/components/processing-view";
+import { VideoPlayer } from "@/components/video-player";
+import { AttentionTimeline } from "@/components/attention-timeline";
+import { ModalityTracks } from "@/components/modality-tracks";
+import { MainTakeaway } from "@/components/main-takeaway";
+import { CreatorFeedback } from "@/components/creator-feedback";
+import { FeatureCard } from "@/components/feature-card";
+import { EvidenceDrawer } from "@/components/evidence-drawer";
+import { Skeleton } from "@/components/ui/skeleton";
 
-type StatusResponse = {
-  status: "queued" | "processing" | "complete" | "error";
-  message?: string;
-};
+// Three.js can't run on the server — lazy load it client-only
+const BrainVisualization = dynamic(
+  () => import("@/components/brain-visualization").then((m) => ({ default: m.BrainVisualization })),
+  { ssr: false, loading: () => <Skeleton className="h-[480px] w-full rounded-xl bg-card" /> }
+);
+
+async function fetchStatus(jobId: string): Promise<JobStatus> {
+  const res = await fetch(`/api/status/${jobId}`);
+  return res.json();
+}
+
+async function fetchResult(jobId: string): Promise<ResonateResult> {
+  const res = await fetch(`/api/results/${jobId}`);
+  return res.json();
+}
 
 export default function ResultsPage() {
   const { jobId } = useParams<{ jobId: string }>();
-  const [status, setStatus] = useState<StatusResponse>({ status: "queued" });
-  const [result, setResult] = useState<ResonateResult | null>(null);
+  const router = useRouter();
+  const isSample = jobId === "sample";
 
-  useEffect(() => {
-    if (status.status === "complete" || status.status === "error") return;
+  const [currentTime, setCurrentTime] = useState(0);
+  const [seekTime, setSeekTime] = useState<number | null>(null);
 
-    const interval = setInterval(async () => {
-      const res = await fetch(`/api/status/${jobId}`);
-      const data: StatusResponse = await res.json();
-      setStatus(data);
+  const { data: statusData } = useQuery({
+    queryKey: ["status", jobId],
+    queryFn: () => fetchStatus(jobId!),
+    enabled: !isSample && !!jobId,
+    refetchInterval: (query) => {
+      const done =
+        query.state.data?.status === "complete" || query.state.data?.status === "error";
+      return done ? false : 2000;
+    },
+  });
 
-      if (data.status === "complete") {
-        clearInterval(interval);
-        const r = await fetch(`/api/results/${jobId}`);
-        setResult(await r.json());
-      }
-    }, 2000);
+  const isReady = isSample || statusData?.status === "complete";
+  const { data: result, isLoading: resultLoading } = useQuery({
+    queryKey: ["result", jobId],
+    queryFn: () => fetchResult(jobId!),
+    enabled: isReady,
+  });
 
-    return () => clearInterval(interval);
-  }, [jobId, status.status]);
-
-  if (!result) {
+  if (!isSample && statusData?.status === "error") {
     return (
-      /* Esha: replace with your processing/loading component */
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-300 animate-pulse">
-          {status.message ?? "Initializing..."}
-        </p>
-      </main>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+        <div className="max-w-md text-center space-y-4">
+          <h2 className="text-xl font-semibold">Analysis failed</h2>
+          <p className="text-muted-foreground">
+            {statusData.message ?? "Something went wrong while analyzing your clip."}
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="inline-block rounded-lg border border-card-border px-4 py-2 text-sm hover:bg-card transition-colors"
+          >
+            Try another clip
+          </button>
+        </div>
+      </div>
     );
   }
 
+  if (!isSample && (!statusData || statusData.status !== "complete")) {
+    return (
+      <ProcessingView
+        message={statusData?.message ?? "Initializing..."}
+        progress={statusData?.progress ?? 0}
+      />
+    );
+  }
+
+  if (result && (!result.brain?.segments || result.brain.segments.length === 0)) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+        <div className="max-w-md text-center space-y-4">
+          <h2 className="text-xl font-semibold">No analysis available</h2>
+          <p className="text-muted-foreground">This clip didn&apos;t return any timeline data.</p>
+          <button
+            onClick={() => router.push("/")}
+            className="inline-block rounded-lg border border-card-border px-4 py-2 text-sm hover:bg-card transition-colors"
+          >
+            Try another clip
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (resultLoading || !result) {
+    return (
+      <div className="min-h-screen bg-background p-6 space-y-6">
+        <Skeleton className="h-[200px] w-full rounded-xl bg-card border-card-border" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-[500px] rounded-xl bg-card border-card-border" />
+          <Skeleton className="h-[500px] rounded-xl bg-card border-card-border" />
+        </div>
+      </div>
+    );
+  }
+
+  const handleSeek = (time: number) => {
+    setSeekTime(time);
+    setTimeout(() => setSeekTime(null), 100);
+  };
+
   return (
-    /* Esha: replace each section with your styled components */
-    <main className="min-h-screen p-6 flex flex-col gap-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        <MainTakeaway result={result} />
 
-      {/* Video Player — props: src={result.videoUrl} */}
-      <section data-slot="video-player">
-        <video src={result.videoUrl} controls className="w-full max-w-md" />
-      </section>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-5 space-y-6 flex flex-col">
+            <VideoPlayer url={result.videoUrl} onTimeUpdate={setCurrentTime} seekTime={seekTime} />
+            <div className="space-y-4">
+              <AttentionTimeline result={result} currentTime={currentTime} onSeek={handleSeek} />
+              <ModalityTracks result={result} currentTime={currentTime} onSeek={handleSeek} />
+            </div>
+          </div>
 
-      {/* Main Takeaway — props: rankedMoments={result.insights.rankedMoments}, modalityBalance={result.insights.modalityBalance} */}
-      <section data-slot="main-takeaway" />
+          <div className="lg:col-span-7 space-y-6">
+            <div className="h-[480px]">
+              <BrainVisualization result={result} currentTime={currentTime} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FeatureCard type="engagementAutopsy" card={result.insights.featureCards.engagementAutopsy} onSeek={handleSeek} />
+              <FeatureCard type="payoffTiming" card={result.insights.featureCards.payoffTiming} onSeek={handleSeek} />
+              <FeatureCard type="modalityBalance" card={result.insights.featureCards.modalityBalance} onSeek={handleSeek} />
+              <FeatureCard type="ctaWindow" card={result.insights.featureCards.ctaWindow} onSeek={handleSeek} />
+            </div>
+          </div>
+        </div>
 
-      {/* Attention Timeline — props: overall={result.brain.overall}, segments={result.brain.segments}, dips={result.insights.dips} */}
-      <section data-slot="attention-timeline" />
-
-      {/* Modality Tracks — props: modality={result.brain.modality} */}
-      <section data-slot="modality-tracks" />
-
-      {/* Feature Cards — props: featureCards={result.insights.featureCards} */}
-      <section data-slot="feature-cards" />
-
-      {/* LLM Analysis — props: markdown={result.insights.llmMarkdown} */}
-      <section data-slot="llm-analysis" />
-
-      {/* Brain/Modality Panel — props: modalityBalance={result.insights.modalityBalance} */}
-      <section data-slot="modality-panel" />
-
-      {/* Evidence Drawer — collapsible debug panel for judges */}
-      <details className="text-xs text-gray-500">
-        <summary className="cursor-pointer">Evidence</summary>
-        <pre className="mt-2 overflow-auto">{JSON.stringify(result, null, 2)}</pre>
-      </details>
-
-    </main>
+        <div className="mt-12 max-w-4xl mx-auto">
+          <CreatorFeedback markdown={result.insights.llmMarkdown} />
+          <EvidenceDrawer result={result} />
+        </div>
+      </main>
+    </div>
   );
 }

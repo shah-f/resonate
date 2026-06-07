@@ -1,42 +1,116 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { UploadCloud, Video, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-export default function UploadPage() {
+export default function Home() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const [file, setFile] = useState<File | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    const data = new FormData(e.currentTarget);
-    const res = await fetch("/api/analyze", { method: "POST", body: data });
-    const { jobId } = await res.json();
-    router.push(`/results/${jobId}`);
-  }
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) setFile(acceptedFiles[0]);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "video/mp4": [".mp4"], "video/quicktime": [".mov"], "video/webm": [".webm"] },
+    maxFiles: 1,
+  });
+
+  const handleAnalyze = async () => {
+    if (!file) return;
+    try {
+      setIsAnalyzing(true);
+      const formData = new FormData();
+      formData.append("video", file);
+      const res = await fetch("/api/analyze", { method: "POST", body: formData });
+      const { jobId } = await res.json();
+      router.push(`/results/${jobId}`);
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+      setIsAnalyzing(false);
+    }
+  };
 
   return (
-    /* Esha: replace this entire <main> with your upload component */
-    <main className="min-h-screen flex flex-col items-center justify-center">
-      <h1 className="text-2xl font-bold">Resonate</h1>
-      <p className="text-gray-400">Find the moments your video loses the brain.</p>
-      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-        <input
-          name="video"
-          type="file"
-          accept=".mp4,.mov,.webm"
-          required
-          className="block"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-6 py-2 bg-blue-600 rounded disabled:opacity-50"
-        >
-          {loading ? "Uploading..." : "Analyze Video"}
-        </button>
-      </form>
-    </main>
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
+      <div className="max-w-2xl w-full space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl font-bold tracking-tight text-white">Resonate</h1>
+          <p className="text-xl text-muted-foreground">
+            Find the moments your video loses the brain.
+          </p>
+        </div>
+
+        <Card className="bg-card border-card-border overflow-hidden">
+          <CardContent className="p-0">
+            <div
+              {...getRootProps()}
+              className={`p-12 border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center text-center gap-4 ${
+                isDragActive
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-border hover:border-primary/50 hover:bg-muted/20"
+              }`}
+            >
+              <input {...getInputProps()} />
+              {file ? (
+                <>
+                  <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                    <Video className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-lg font-medium text-white">{file.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-2">
+                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-lg font-medium text-white">
+                      Drag &amp; drop your vertical video
+                    </p>
+                    <p className="text-sm text-muted-foreground">Supports .mp4, .mov, .webm</p>
+                    <p className="text-xs text-primary mt-2">
+                      Short vertical clips work best for the demo.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {file && (
+              <div className="p-4 bg-muted/30 border-t border-card-border flex justify-end">
+                <Button onClick={handleAnalyze} disabled={isAnalyzing} className="w-full sm:w-auto">
+                  {isAnalyzing ? "Preparing..." : "Analyze Video"}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="text-center">
+          <Button
+            variant="link"
+            className="text-muted-foreground hover:text-white"
+            onClick={() => router.push("/results/sample")}
+          >
+            Or try the sample clip without uploading
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

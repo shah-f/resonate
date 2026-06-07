@@ -26,5 +26,6 @@ export async function GET(
     return NextResponse.json({ status: "complete" });
   }
   const msgIndex = Math.min(Math.floor(elapsed / SLOT_MS), MESSAGES.length - 1);
-  return NextResponse.json({ status: "processing", message: MESSAGES[msgIndex] });
+  const progress = elapsed / TOTAL_MS;
+  return NextResponse.json({ status: "processing", message: MESSAGES[msgIndex], progress });
 }
