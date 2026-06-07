@@ -447,3 +447,168 @@ def main():
     print("  modality.audio    — auditory cortex activation over time")
     print("  modality.language — language region activation over time")
     print("  parcels           — all 200 Schaefer region scores over time")
+
+
+# ── Web API ────────────────────────────────────────────────────────────────────
+# Deployed as a public HTTPS endpoint via `modal deploy resonate_tribe_modal.py`
+# URL: https://<workspace>--resonate-api.modal.run
+#
+# Jobs are stored in a Modal Dict so state persists across container restarts
+# and is visible to all horizontally-scaled instances.
+
+_job_dict = modal.Dict.from_name("resonate-jobs", create_if_missing=True)
+
+_web_image = (
+    image
+    .pip_install("fastapi[standard]", "python-multipart", "openai")
+    .add_local_dir("analysis", remote_path="/app/analysis")
+    .add_local_dir("scripts",  remote_path="/app/scripts")
+    .add_local_file(
+        "results/schaefer200_modality_mapping.json",
+        remote_path="/app/results/schaefer200_modality_mapping.json",
+    )
+)
+
+
+@app.function(
+    image=_web_image,
+    timeout=600,
+    secrets=[modal.Secret.from_name("openai-key")],
+)
+@modal.concurrent(max_inputs=20)
+@modal.asgi_app()
+def api():
+    import sys, os, uuid, json, tempfile, threading
+    from pathlib import Path
+    from fastapi import FastAPI, File, UploadFile, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import Response
+
+    sys.path.insert(0, "/app/scripts")
+    sys.path.insert(0, "/app/analysis")
+
+    from insights_to_result import insights_to_result  # noqa: E402
+    from resonate_analysis import analyze as _analyze   # noqa: E402
+
+    MAPPING_PATH = Path("/app/results/schaefer200_modality_mapping.json")
+
+    web_app = FastAPI(title="Resonate API")
+    web_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    def _run_job(job_id: str, video_bytes: bytes, filename: str) -> None:
+        def update(msg: str, progress: float) -> None:
+            job = dict(_job_dict.get(job_id, {}))
+            job.update({"message": msg, "progress": progress})
+            _job_dict[job_id] = job
+
+        try:
+            update("Running Tribe v2...", 0.05)
+            result = run_tribe.remote(video_bytes, filename)
+
+            update("Mapping Schaefer-200 atlas...", 0.5)
+            with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as f:
+                json.dump(result, f)
+                tmp_path = Path(f.name)
+
+            update("Analyzing engagement signals...", 0.65)
+            insights = _analyze(
+                tmp_path,
+                mapping_path=MAPPING_PATH if MAPPING_PATH.exists() else None,
+            )
+            tmp_path.unlink(missing_ok=True)
+
+            # LLM coaching — optional, skipped if no API key
+            llm_md = ""
+            if os.environ.get("OPENAI_API_KEY"):
+                try:
+                    update("Generating creator feedback...", 0.85)
+                    from resonate_llm_insights import call_openai   # noqa: E402
+                    from resonate_llm_prompt import build_prompt     # noqa: E402
+                    prompt = build_prompt(insights)
+                    llm_md, _ = call_openai(prompt, model="gpt-4o", temperature=0.4)
+                except Exception:
+                    pass
+
+            # Transpose parcels (timesteps × 200) → (200 × timesteps) for the frontend
+            raw_parcels = result.get("parcels")
+            parcels_t = None
+            if raw_parcels and len(raw_parcels) > 0 and len(raw_parcels[0]) > 0:
+                n = len(raw_parcels[0])
+                parcels_t = [
+                    [raw_parcels[t][p] for t in range(len(raw_parcels))]
+                    for p in range(n)
+                ]
+
+            resonate_result = insights_to_result(
+                insights, f"/api/video/{job_id}", llm_md, parcels=parcels_t
+            )
+
+            _job_dict[job_id] = {
+                "status": "complete",
+                "message": "Done",
+                "progress": 1.0,
+                "result": resonate_result,
+                "video_bytes": list(video_bytes),  # store as list for JSON-safe Dict
+                "content_type": "video/quicktime" if filename.lower().endswith(".mov") else "video/mp4",
+            }
+        except Exception as exc:
+            _job_dict[job_id] = {
+                "status": "error",
+                "message": str(exc)[:500],
+                "progress": 0,
+            }
+
+    @web_app.post("/analyze")
+    async def analyze(video: UploadFile = File(...)):
+        job_id = str(uuid.uuid4())
+        video_bytes = await video.read()
+        _job_dict[job_id] = {"status": "processing", "message": "Initializing...", "progress": 0.0}
+        threading.Thread(
+            target=_run_job,
+            args=(job_id, video_bytes, video.filename or "video.mp4"),
+            daemon=True,
+        ).start()
+        return {"jobId": job_id}
+
+    @web_app.get("/status/{job_id}")
+    def get_status(job_id: str):
+        job = _job_dict.get(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        return {
+            "status": job["status"],
+            "message": job.get("message", ""),
+            "progress": job.get("progress", 0),
+        }
+
+    @web_app.get("/results/{job_id}")
+    def get_results(job_id: str):
+        job = _job_dict.get(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        if job["status"] == "error":
+            raise HTTPException(status_code=500, detail=job.get("message", "Analysis failed"))
+        if job["status"] != "complete":
+            raise HTTPException(status_code=202, detail="Job not complete yet")
+        return job["result"]
+
+    @web_app.get("/video/{job_id}")
+    def get_video(job_id: str):
+        job = _job_dict.get(job_id)
+        if not job or "video_bytes" not in job:
+            raise HTTPException(status_code=404, detail="Video not found")
+        return Response(
+            content=bytes(job["video_bytes"]),
+            media_type=job.get("content_type", "video/mp4"),
+        )
+
+    @web_app.get("/health")
+    def health():
+        return {"ok": True}
+
+    return web_app

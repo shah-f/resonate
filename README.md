@@ -1,175 +1,169 @@
-# Resonate Brain Backend Workspace
+# Resonate
 
-Resonate is a hackathon prototype for analyzing short-form videos with predicted brain-response signals. A user uploads a video, the backend runs Meta Tribe v2 to predict cortical activation over time, maps raw fsaverage5 surface vertices into Schaefer-200 brain atlas parcels, and summarizes the result into visual, audio, and language modality tracks.
+**Know exactly where your video loses the brain.**
 
-The product plan is in `PLAN.md`. Treat that file as the source of truth for scope, demo priorities, and feature ordering.
+Resonate runs your short-form video through Meta's Tribe v2 brain encoding model to predict second-by-second cortical activation across 20,000+ brain surface vertices. It maps those signals onto the Schaefer-200 neuroscience atlas, separates them into visual, audio, and language engagement tracks, and delivers creator-ready coaching — all in under two minutes.
 
-## What Is Here
+Built in 12 hours at the NYTW Intern Hackathon.
 
-- `resonate_tribe_modal.py` - active Modal backend for Tribe v2 inference and Schaefer-200 atlas mapping.
-- `debug_text.py` - standalone debug helper for neuralset/Hugging Face cache inspection.
-- `modal_test/` - local atlas validation, Modal smoke test, and deployed inference test script.
-- `test_clips/` - sample video inputs.
-- `results/` - generated inference outputs from test runs.
-- `reference_videos/` - intended home for curated reference videos.
-- `resonate_*_agent.md` - task briefs for specialized build agents.
-- `AGENTS.md` - instructions for future coding agents.
-- `PROGRESS.md` - concise critical handoff notes.
-- `LOGS.md` - detailed debug notes and exploratory records.
+---
 
-## Core Backend Flow
+## What It Does
 
-1. Build a Modal image with Tribe v2 and supporting dependencies.
-2. Download/cache Tribe v2 and LLaMA weights using the configured Hugging Face token.
-3. Accept uploaded video bytes in `run_tribe`.
-4. Run Tribe v2 inference to produce timestep-by-vertex predictions.
-5. Load Schaefer-200 fsaverage5 surface labels.
-6. Average vertex predictions into 200 parcel scores per timestep.
-7. Group parcels into visual, audio, and language modality tracks.
-8. Return raw predictions, segments, parcel scores, parcel names, modality tracks, and modality indices.
+Upload a vertical video. Resonate:
 
-## Important Files
+1. **Runs Tribe v2 inference** on Modal GPU infrastructure — predicting how a human brain responds to every second of your content at the cortical level
+2. **Maps 20,484 fsaverage5 surface vertices** to 200 named brain parcels using the Schaefer-200 atlas (Yeo lab, 7-network parcellation)
+3. **Aggregates into three engagement modalities** — Visual, Audio, Language — based on neuroscientifically-validated region groupings
+4. **Finds your dips, hooks, and CTA windows** — the exact timesteps where predicted engagement collapses, peaks, or plateaus
+5. **Generates plain-language creator coaching** via GPT-4o, translating neuroscience signals into actionable fixes
 
-Read these first when getting oriented:
+---
 
-- `PLAN.md` - project goals, hackathon build order, and architecture.
-- `AGENTS.md` - repo-specific working instructions.
-- `PROGRESS.md` - critical current context and handoff notes.
-- `LOGS.md` - detailed history, debugging notes, and analysis records.
-- `resonate_tribe_modal.py` - current implementation.
+## Demo
 
-Specialized docs:
+Five pre-analyzed clips load instantly — no upload required:
 
-- `resonate_atlas_agent.md` - verify/refine atlas modality groupings.
-- `resonate_blue_agent.md` - create reference corpus and Blueprint files.
-- `frontendAgents/resonate_frontend_agents.md` - Next.js frontend plan.
-- `frontendAgents/resonate_brain_visualization_agent.md` - frontend brain visualization plan.
+| Clip | Duration | Dominant Modality |
+|---|---|---|
+| Complaint TikTok | 15s | Audio |
+| Finance Explainer | 11s | Language |
+| GRWM | 16s | Visual |
+| Walk in the Park | 15s | Visual |
+| Flow State (Zetamac) | 14s | Audio |
 
-## Validation
+---
 
-Install local Python dependencies:
+## Architecture
 
-```bash
-python3 -m pip install -r requirements.txt
+```
+Browser (Next.js 16)
+    │
+    ├── /api/analyze   → FastAPI (Python)
+    │       │
+    │       ├── Modal GPU  →  Tribe v2 inference (20,484 vertices × N timesteps)
+    │       │                  ↓
+    │       │              Schaefer-200 atlas mapping  →  200 parcel scores
+    │       │                  ↓
+    │       ├── resonate_analysis.py  →  modality tracks, dips, windows, feature cards
+    │       └── resonate_llm_insights.py  →  GPT-4o coaching (optional)
+    │
+    └── /results/[jobId]  →  React results dashboard
+            ├── 3D Brain (Three.js / React Three Fiber)  —  200 parcel nodes, live-animated
+            ├── Attention Timeline
+            ├── Modality Tracks (Visual / Audio / Language)
+            ├── Feature Cards  —  Hook, Engagement Autopsy, Payoff, CTA Window, Balance
+            └── Creator Feedback  —  LLM coaching markdown
 ```
 
-Local atlas validation:
+---
+
+## Tech Stack
+
+### AI / Neuroscience
+| Component | What it does |
+|---|---|
+| **Meta Tribe v2** | Brain encoding model — predicts fMRI-like cortical response from video |
+| **Schaefer-200 Atlas** (Yeo lab, 7-network) | Maps 20,484 fsaverage5 surface vertices → 200 named brain parcels |
+| **nibabel** | Reads `.annot` surface label files from the FreeSurfer/CBIG atlas |
+| **GPT-4o** | Translates neuroscience evidence packets into creator coaching |
+
+### Backend
+| Component | What it does |
+|---|---|
+| **Modal** | Serverless GPU execution for Tribe v2 (A10G / T4) |
+| **FastAPI + Uvicorn** | REST API server — job queue, status polling, video streaming |
+| **NumPy** | Signal normalization, parcel averaging, window analysis |
+| **PySceneDetect** | Local scene-cut detection for pacing analysis |
+
+### Frontend
+| Component | What it does |
+|---|---|
+| **Next.js 16** | App router, server components, API proxy routes |
+| **React Three Fiber + Three.js** | 3D brain visualization — 200 animated parcel nodes with bloom post-processing |
+| **@react-three/postprocessing** | Bloom effect on parcel activation |
+| **TanStack Query** | Job status polling and result fetching |
+| **Tailwind CSS v4** | Styling |
+| **Framer Motion** | Transitions |
+| **Radix UI** | Accessible UI primitives |
+| **Recharts** | Timeline charts |
+| **react-markdown + remark-gfm** | LLM coaching render |
+
+---
+
+## Running Locally
+
+### Backend
 
 ```bash
-python modal_test/test_atlas_local.py
+# Install Python deps
+pip install -r requirements.txt
+
+# Start the API server (requires Modal auth)
+python3 scripts/api_server.py
+# → http://localhost:8000
 ```
 
-Modal smoke test:
+Modal credentials must be configured (`modal token new`) and the `resonate` app must be deployed:
 
 ```bash
-modal run modal_test/hello.py
+modal deploy resonate_tribe_modal.py
 ```
 
-Run deployed inference on the included test clip:
+Set `OPENAI_API_KEY` to enable LLM coaching. Without it, the pipeline still runs — coaching cards are just omitted.
+
+### Frontend
 
 ```bash
-modal run modal_test/test_final.py
+cd frontendStuff/resonate-app
+pnpm install
+pnpm dev
+# → http://localhost:3000
 ```
 
-The inference script writes generated output under `results/`.
+Set `PYTHON_API_URL` in `.env.local` if the backend runs on a non-default port:
 
-Run deployed inference on an arbitrary local clip and print a summary. A video path is required:
-
-```bash
-python3 modal_test/test_inference.py path/to/video.mp4
+```
+PYTHON_API_URL=http://localhost:8000
 ```
 
-Both inference scripts first check `results/` for an existing `<video_stem>.json` or `<video_stem>.npz` artifact and skip the Modal call if one exists.
+---
 
-Analyze a saved inference result locally without Modal or LLM calls:
+## Pipeline Details
 
-```bash
-python3 analysis/resonate_analysis.py results/finance_test_clip.json
+### Tribe v2 Inference
+Tribe v2 is a video-to-brain encoding model trained on fMRI data from humans watching naturalistic video. It produces per-vertex activation predictions on the fsaverage5 cortical surface mesh — the same coordinate space used in human neuroimaging studies. Resonate uses Modal to run this inference on-demand with no local GPU required.
+
+### Schaefer-200 Atlas Mapping
+Raw vertex predictions are averaged within each of the 200 Schaefer parcels using the fsaverage5 `.annot` files from the CBIG/Yeo lab. Parcels are grouped into three modality tracks by region name:
+
+- **Visual** — parcels matching `Vis` (visual cortex networks)
+- **Audio** — parcels matching `SomMot` (somatomotor, which includes auditory cortex in this parcellation)
+- **Language** — parcels matching `Default_Temp`, `Default_PFC`, `Cont_Temp`, `Cont_PFCl` (default mode and control networks implicated in language and semantic processing)
+
+### Analysis
+`resonate_analysis.py` is fully deterministic — no model calls. It normalizes modality tracks to 0–100, computes a weighted overall engagement score, identifies attention dips (timesteps with the steepest drops), finds the optimal CTA window (earliest high-attention moment), and generates structured evidence packets for each insight card.
+
+---
+
+## Repository Layout
+
 ```
-
-This writes `results/finance_test_clip_insights.json`.
-
-The analyzer is deterministic. It produces an `llm_context` evidence packet that can be fed to an LLM later for polished creator-facing coaching.
-
-Add the source video path to enable local PySceneDetect pacing alerts:
-
-```bash
-python3 analysis/resonate_analysis.py results/finance_test_clip.json --video test_clips/finance_test_clip.mp4
+brain/
+├── resonate_tribe_modal.py        # Modal app — Tribe v2 inference + atlas mapping
+├── scripts/
+│   ├── api_server.py              # FastAPI server
+│   └── insights_to_result.py     # Converts insights JSON → ResonateResult shape
+├── analysis/
+│   ├── resonate_analysis.py       # Deterministic signal analysis
+│   ├── resonate_llm_insights.py   # GPT-4o coaching generation
+│   └── resonate_llm_prompt.py     # Prompt builder
+├── modal_test/
+│   └── test_inference.py          # Run inference on a local video
+├── results/                       # Generated inference + insights artifacts
+├── test_clips/                    # Sample input videos
+└── frontendStuff/resonate-app/    # Next.js frontend
+    ├── app/                       # App router pages + API routes
+    ├── components/                # UI components incl. brain-visualization.tsx
+    └── lib/library/               # Pre-generated results for demo clips
 ```
-
-This adds scene cuts, long-hold warnings, and a Pacing Alert feature card to the insights JSON without calling Modal.
-
-Build the prompt for that LLM pass:
-
-```bash
-python3 analysis/resonate_llm_prompt.py results/finance_test_clip_insights.json
-```
-
-This writes `results/finance_test_clip_insights_llm_prompt.md`.
-
-Generate the LLM-style creator analysis:
-
-```bash
-python3 analysis/resonate_llm_insights.py results/finance_test_clip_insights.json
-```
-
-The script expects `OPENAI_API_KEY` and writes `results/finance_test_clip_insights_llm_analysis.md`. For a local smoke test only, add `--dry-run`.
-
-## Perseus (code search for agents)
-
-This repo is indexed with [Perseus](https://perseus.computer) so Cursor and other agents can find code by meaning, not just string match.
-
-**One-time install** (macOS/Linux):
-
-```bash
-curl -fsSL https://perseus.computer/install.sh | sh
-export PATH="$HOME/.local/bin:$PATH"   # add to ~/.zshrc if needed
-perseus login                          # browser OAuth — enables hosted MCTS search
-```
-
-**Agent rules** (already installed in this repo):
-
-```bash
-perseus rules add      # installs .cursor/rules/perseus.mdc + updates AGENTS.md / CLAUDE.md
-perseus rules status   # check install state
-```
-
-**Index after code changes:**
-
-```bash
-cd /path/to/brain
-perseus index
-```
-
-Without `perseus login`, `perseus index` builds a **local** sqlite index. Query it with `--local`:
-
-```bash
-perseus query --local --no-summary --json "Modal Tribe run_tribe inference"
-```
-
-After login, hosted search uses the full MCTS planner (no `--local`):
-
-```bash
-perseus query "Schaefer atlas modality mapping"
-```
-
-Optional: install the [Perseus GitHub App](https://github.com/apps/perseus-console) on `shah-f/resonate` so pushes auto-index on [perseus.computer](https://perseus.computer).
-
-Docs: [CLI reference](https://perseus.computer/docs/cli) · [Quickstart](https://perseus.computer/docs/quickstart)
-
-## Operational Notes
-
-- This workspace is a git repo connected to `https://github.com/shah-f/resonate.git`.
-- Modal inference requires configured Modal auth and the `huggingface-token` secret.
-- Remote inference may incur GPU time and depends on large model downloads/caches.
-- `results/` and `__pycache__/` are generated artifacts.
-- `test_clips/` and `reference_videos/` are data directories; do not remove their contents without confirming.
-
-## Next Likely Work
-
-Per `PLAN.md`, the critical backend sequence is:
-
-1. Verify Schaefer-200 modality groupings with the Atlas Agent instructions.
-2. Score curated reference videos with the Blue Agent instructions.
-3. Preserve generated Blueprint artifacts for frontend/API use.
-4. Wire the frontend/API layer around the Modal response shape.
