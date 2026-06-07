@@ -47,6 +47,7 @@ Overall: 71%
 - All meaningful engagement dips flagged, not just the worst one
 - Each dip labeled by **which modality dropped** — e.g. "Visual attention fell here (-42%)" or "Audio engagement dropped (-31%)"
 - Hook zone (first 3–8s) highlighted separately with per-modality breakdown
+- Use Tribe's event dataframe and parsed segment timings to align dips with the exact extracted video/audio/text event rows that produced them
 - GPT-4o "why + fix" explanation at each dip, informed by which modality caused it
 
 ### 2. Sound-Off Score
@@ -60,6 +61,7 @@ Overall: 71%
 - **Balance bar** — three-way split: Visual | Audio | Language (e.g. 28% / 20% / 52%)
 - **One-line verdict** — e.g. *"Language-heavy — meaning is carried by words, not visuals or sound"*
 - **Timeline strip** — three-color second-by-second chart (blue=visual, green=audio, red=language); click a spike to jump to that moment
+- Back each spike with saved event metadata, so the UI can explain whether the moment came from visual frames, audio/voice, text/language extraction, or timing overlap
 - **vs Blueprint/niche** — your three-way split vs reference pack average
 - GPT-4o structural fix suggestion — no re-run needed
 - **Fix + proof (optional)** — suggested structural edit (shorten copy, delay VO, add b-roll) with before/after balance shift if there is time to support a simulated rerun
@@ -69,13 +71,21 @@ Overall: 71%
 - Finds the optimal timestamp to place the CTA (click/subscribe/buy)
 - Shows **per-modality attention** at the optimal moment — e.g. "Visual: 84%, Audio: 71%, Language: 90% at 0:18"
 - Flags when CTA lands after any modality has already significantly dropped
+- Uses parsed segment start/end times, not just array index, so CTA recommendations map cleanly back onto the video player
 - **Why:** CTA too early = annoying; too late = they've scrolled — creators guess today with no data
 
 ### 5. Pacing Alert
 - Detects long stretches with no visual change and correlates them with Tribe engagement dips
 - Uses **PySceneDetect** (Python, CPU-only) for scene-cut detection — no extra ML model needed
+- Cross-checks scene-cut timing against Tribe event rows and segment metadata so "held too long" warnings can distinguish edit pacing from weak language/audio content
 - Flags moments where the edit holds too long while predicted attention falls
 - **Why:** Short-form editors already know "don't hold a shot too long" — this validates that instinct with predicted brain response
+
+### 6. Full Signal Capture
+- Every paid Modal inference should preserve all useful model-side context, not only the final score arrays
+- Save raw predictions, parsed segments, Tribe event dataframe records/columns, video metadata, model/cache metadata, atlas parcel names, modality indices, and modality keywords
+- **Why:** lets us debug, create richer explanations, re-score with improved analysis logic, and interpret old parcel arrays without spending Modal credits again
+- JSON remains the full-fidelity artifact; compressed NPZ stores the major numeric arrays plus object metadata for quick analysis
 
 ---
 
@@ -86,6 +96,7 @@ Tribe v2 outputs raw predictions across ~20,000 cortical vertices on the fsavera
 - Load the **Schaefer-200 parcellation** (200 named cortical regions mapped to fsaverage5)
 - Average vertex-level activation within each parcel → 200 region-level scores per timestep
 - Map regions to plain-English functions: e.g. region 14 → "primary visual cortex", region 87 → "language processing"
+- Save parcel names and modality indices with every new inference result, and keep the global mapping artifact at `results/schaefer200_modality_mapping.json`
 - This layer runs inside the Modal function — no extra service needed
 
 **Why this matters for judges:** This is real neuroscience, not a black box. A neuroscientist in the audience will recognize the atlas and know this isn't faked. It's the detail that separates serious ML work from a GPT wrapper.
@@ -135,6 +146,7 @@ Tribe v2 outputs raw predictions across ~20,000 cortical vertices on the fsavera
   → [Next.js API route]
       → [Modal endpoint]
             → Tribe v2 inference → 20k vertex fMRI predictions
+            → capture Tribe event dataframe + parsed segment timing + run metadata
             → Schaefer-200 atlas → 200 named region scores × timesteps
             → dip detection + Sound-Off delta + CTA window + pacing alerts
       → [OpenAI GPT-4o] → plain-language suggestions per region/dip

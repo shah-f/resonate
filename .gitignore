@@ -1,0 +1,21 @@
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+
+# IDE / local tooling
+.claude/
+.DS_Store
+*.local.json
+
+# Modal / HF local caches (never commit tokens or weights)
+.modal/
+model_cache/
