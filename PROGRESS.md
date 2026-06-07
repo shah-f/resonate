@@ -21,6 +21,13 @@ For detailed debugging notes, command outcomes, and exploratory analysis, use `L
 - Both inference scripts check for existing `results/<video_stem>.json` or `results/<video_stem>.npz` before calling Modal and skip the run if artifacts already exist.
 - This guard exists to conserve Modal credits.
 
+## Backend Capture Schema
+
+- Local `resonate_tribe_modal.py` now uses capture schema version 2 for future runs.
+- Future `run_tribe()` responses include raw predictions, parsed/rich segments, Tribe event dataframe records, run metadata, atlas parcel names, and modality indices.
+- `modal_test/test_final.py` now preserves those richer fields in JSON and stores key metadata/object arrays in NPZ.
+- This has been syntax-checked locally but not deployed or run on Modal yet.
+
 ## Saved First-Run Analysis
 
 - First-run finance artifacts still exist:

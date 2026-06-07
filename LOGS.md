@@ -116,6 +116,52 @@ Decision:
 - `SomMot` is acceptable as an audio proxy for this hackathon/demo because Schaefer-7 has no separate auditory network and auditory areas are folded into somatomotor at this atlas/network granularity.
 - Language grouping is acceptable as a broad language/meaning proxy, but product copy should not claim exact Broca/Wernicke or named-region precision from this grouping alone.
 
+## 2026-06-07 - Backend Full Signal Capture Added Locally
+
+Updated local backend capture so future paid Modal runs preserve more useful data.
+
+Files changed:
+
+- `resonate_tribe_modal.py`
+- `modal_test/test_final.py`
+- `modal_test/test_inference.py`
+- `PLAN.md`
+- `PROGRESS.md`
+- `LOGS.md`
+
+Added to future `run_tribe()` responses:
+
+- `events`: JSON-safe records/columns/shape from `model.get_events_dataframe(...)`
+- richer `segments`: type, repr, start/end/duration when parseable
+- `segments_parsed`: simple start/end list for player/timeline alignment
+- `metadata`: filename, video size, run timestamps, model/cache paths, atlas name, modality keywords, `capture_schema_version: 2`
+
+Updated saving in `modal_test/test_final.py`:
+
+- JSON still stores the full result.
+- NPZ now also stores:
+  - `segments_parsed`
+  - `event_records`
+  - `event_columns`
+  - `parcel_names`
+  - `modality_indices`
+  - `metadata`
+
+Why this helps features:
+
+- Engagement Autopsy can align dips with extracted event rows and exact segment timing.
+- Modality Balance can explain spikes using saved event context.
+- CTA Window Finder can map recommended moments to parsed start/end times instead of bare indices.
+- Pacing Alert can compare scene cuts against Tribe event/segment timing.
+- Old results can be re-analyzed more richly without spending Modal credits again.
+
+Validation:
+
+- `python3 -m py_compile resonate_tribe_modal.py modal_test/test_final.py modal_test/test_inference.py`
+- `python3 modal_test/test_inference.py test_clips/finance_test_clip.mp4`
+
+The finance inference script detected existing artifacts and skipped Modal. No Modal deployment or inference run was performed.
+
 ## 2026-06-07 - Modal Test Cleanup
 
 Removed:
