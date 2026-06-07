@@ -3,7 +3,7 @@
 This is deterministic analysis code. It does not call Modal or an LLM.
 
 Usage:
-    python3 analysis/resonate_analysis.py results/finance_test_clip.json
+    python3 analysis/resonate_analysis.py results/finance_test_clip.json --video test_clips/finance_test_clip.mp4
 """
 from __future__ import annotations
 
@@ -180,46 +180,15 @@ def modality_balance(tracks: dict[str, np.ndarray]) -> dict[str, Any]:
 
 
 def cta_window(overall: np.ndarray, normalized_tracks: dict[str, np.ndarray], segments: list[dict[str, float]]) -> dict[str, Any]:
-    n = overall.size
-    # Exclude the final 10% of the clip (min 1 timestep) to avoid recommending the last frame.
-    cutoff = max(1, n - max(1, n // 10))
-    early = overall[:cutoff]
-
-    # Find the earliest local maximum above the 75th percentile in the early window.
-    threshold = float(np.percentile(overall, 75))
-    candidates = [
-        i for i in range(1, cutoff - 1)
-        if overall[i] >= threshold and overall[i] >= overall[i - 1] and overall[i] >= overall[i + 1]
-    ]
-    # Also consider the global max within the early window.
-    early_max_idx = int(early.argmax())
-    if early_max_idx not in candidates and float(early[early_max_idx]) >= threshold:
-        candidates.append(early_max_idx)
-
-    too_late = False
-    if candidates:
-        idx = min(candidates)  # earliest high-attention moment
-    else:
-        # No qualifying moment before the end — CTA is forced late.
-        idx = int(overall.argmax())
-        too_late = True
-
+    idx = int(overall.argmax())
     segment = segments[idx]
-    clip_end = segments[-1]["end"]
-    pct_through = round(float(segments[idx]["start"]) / clip_end * 100) if clip_end else 0
     return {
         "timestep": idx,
         "start": round(float(segment["start"]), 3),
         "end": round(float(segment["end"]), 3),
         "overall": round(float(overall[idx]), 1),
         "modalities": {m: round(float(normalized_tracks[m][idx]), 1) for m in MODALITIES},
-        "pct_through_clip": pct_through,
-        "too_late": too_late,
-        "note": (
-            "No high-attention moment found before the final stretch — CTA window is too late for short-form retention."
-            if too_late
-            else "Earliest high-attention moment; ideal for payoff or CTA placement."
-        ),
+        "note": "Best local moment for payoff/CTA based on combined normalized activation.",
     }
 
 
@@ -246,6 +215,145 @@ def ranked_moments(
     return {
         "strongest": [moment(int(i)) for i in strongest],
         "weakest": [moment(int(i)) for i in weakest],
+    }
+
+
+def detect_scene_intervals(video_path: Path, threshold: float = 27.0) -> dict[str, Any]:
+    """Detect scene intervals with PySceneDetect when it is installed."""
+    if not video_path.exists():
+        return {
+            "available": False,
+            "reason": f"Video not found: {video_path}",
+            "video_path": str(video_path),
+            "scene_intervals": [],
+            "scene_cuts": [],
+        }
+
+    try:
+        from scenedetect import SceneManager, open_video
+        from scenedetect.detectors import ContentDetector
+    except ImportError:
+        return {
+            "available": False,
+            "reason": "PySceneDetect is not installed. Install the 'scenedetect' package to enable pacing alerts.",
+            "video_path": str(video_path),
+            "scene_intervals": [],
+            "scene_cuts": [],
+        }
+
+    video = open_video(str(video_path))
+    scene_manager = SceneManager()
+    scene_manager.add_detector(ContentDetector(threshold=threshold))
+    scene_manager.detect_scenes(video)
+    scene_list = scene_manager.get_scene_list()
+
+    intervals = []
+    for start, end in scene_list:
+        start_s = float(start.seconds)
+        end_s = float(end.seconds)
+        intervals.append(
+            {
+                "start": round(start_s, 3),
+                "end": round(end_s, 3),
+                "duration": round(max(0.0, end_s - start_s), 3),
+            }
+        )
+
+    if not intervals and video.duration is not None:
+        duration = float(video.duration.seconds)
+        intervals = [{"start": 0.0, "end": round(duration, 3), "duration": round(duration, 3)}]
+
+    return {
+        "available": True,
+        "reason": None,
+        "video_path": str(video_path),
+        "threshold": threshold,
+        "scene_intervals": intervals,
+        "scene_cuts": [scene["start"] for scene in intervals[1:]],
+    }
+
+
+def pacing_alert(
+    video_path: Path | None,
+    segments: list[dict[str, float]],
+    overall: np.ndarray,
+    normalized_tracks: dict[str, np.ndarray],
+    dips: list[dict[str, Any]],
+    hold_threshold_seconds: float = 2.5,
+) -> dict[str, Any]:
+    if video_path is None:
+        return {
+            "available": False,
+            "reason": "No video path was provided. Pass --video to enable scene-cut pacing analysis.",
+            "scene_cuts": [],
+            "scene_intervals": [],
+            "long_hold_warnings": [],
+        }
+
+    scene_data = detect_scene_intervals(video_path)
+    if not scene_data["available"]:
+        return {
+            **scene_data,
+            "hold_threshold_seconds": hold_threshold_seconds,
+            "long_hold_warnings": [],
+        }
+
+    warnings = []
+    centers = np.asarray([(s["start"] + s["end"]) / 2.0 for s in segments], dtype=float)
+
+    for scene_index, scene in enumerate(scene_data["scene_intervals"]):
+        indices = [
+            int(i)
+            for i, center in enumerate(centers)
+            if scene["start"] <= center < scene["end"]
+        ]
+        if len(indices) < 2 or scene["duration"] < hold_threshold_seconds:
+            continue
+
+        first_idx = indices[0]
+        last_idx = indices[-1]
+        overall_delta = float(overall[last_idx] - overall[first_idx])
+        dips_inside = [
+            dip
+            for dip in dips
+            if scene["start"] <= float(dip["start"]) < scene["end"]
+        ]
+        if overall_delta > -8.0 and not dips_inside:
+            continue
+
+        modality_deltas = {
+            m: round(float(normalized_tracks[m][last_idx] - normalized_tracks[m][first_idx]), 1)
+            for m in MODALITIES
+        }
+        lead_modality = min(modality_deltas, key=modality_deltas.get)
+        warnings.append(
+            {
+                "scene_index": scene_index,
+                "start": scene["start"],
+                "end": scene["end"],
+                "duration": scene["duration"],
+                "timesteps": indices,
+                "overall_start": round(float(overall[first_idx]), 1),
+                "overall_end": round(float(overall[last_idx]), 1),
+                "overall_delta": round(overall_delta, 1),
+                "lead_modality": lead_modality,
+                "modality_deltas": modality_deltas,
+                "aligned_dips": dips_inside,
+                "suggested_fix": (
+                    f"Add a visual change, cutaway, caption contrast, or delivery shift before {scene['end']:.1f}s."
+                ),
+            }
+        )
+
+    return {
+        **scene_data,
+        "hold_threshold_seconds": hold_threshold_seconds,
+        "long_hold_warnings": warnings,
+        "summary": (
+            f"{len(warnings)} long hold(s) align with a predicted engagement drop."
+            if warnings
+            else "No long scene holds aligned with predicted engagement drops."
+        ),
     }
 
 
@@ -307,7 +415,7 @@ def evidence_summary(
     cta: dict[str, Any],
     balance: dict[str, Any],
     moments: dict[str, list[dict[str, Any]]],
-    overall: np.ndarray | None = None,
+    pacing: dict[str, Any],
 ) -> dict[str, Any]:
     hook = windows["hook"]
     close = windows["close"]
@@ -315,77 +423,24 @@ def evidence_summary(
     if hook["overall"] is not None and close["overall"] is not None:
         payoff_delta = round(float(close["overall"] - hook["overall"]), 1)
 
-    slow_burn = is_slow_burn(overall) if overall is not None else False
-
-    if slow_burn:
-        main_story = "Slow-burn pattern: predicted activation rises across the entire clip, starting very low. The hook fails to capture attention before the 2s scroll threshold."
-    elif payoff_delta is not None and payoff_delta >= 25:
-        main_story = "The strongest combined activation arrives near the end, while the hook is weak."
-    else:
-        main_story = "The clip has uneven activation across time."
-
     return {
-        "main_story": main_story,
-        "slow_burn": slow_burn,
+        "main_story": (
+            "The strongest combined activation arrives near the end, while the hook is weak."
+            if payoff_delta is not None and payoff_delta >= 25
+            else "The clip has uneven activation across time."
+        ),
         "payoff_delta_close_minus_hook": payoff_delta,
-        "cta_too_late": cta.get("too_late", False),
         "first_major_dip": dips[0] if dips else None,
         "strongest_moment": moments["strongest"][0] if moments["strongest"] else None,
         "weakest_moment": moments["weakest"][0] if moments["weakest"] else None,
         "cta_window": cta,
         "modality_balance": balance,
-    }
-
-
-def hook_card(windows: dict[str, Any], dips: list[dict[str, Any]]) -> dict[str, Any]:
-    hook = windows["hook"]
-    if hook["overall"] is None:
-        return {
-            "headline": "No hook data available.",
-            "evidence": None,
-            "suggested_fix": "Ensure the clip is long enough to capture a hook window.",
-        }
-
-    hook_dips = [d for d in dips if d["end"] <= 3.0]
-    mods = hook["modalities"]
-    lead = max(mods, key=lambda m: mods[m] if mods[m] is not None else -1)
-    weak = min(mods, key=lambda m: mods[m] if mods[m] is not None else 999)
-
-    if hook_dips:
-        first = hook_dips[0]
-        headline = (
-            f"Hook collapses at {first['start']:.0f}s — predicted attention drops {abs(first['overall_delta']):.0f} pts, "
-            f"led by {first['lead_modality']}."
-        )
-        fix = (
-            f"Your hook scores {hook['overall']}/100 overall. "
-            f"{lead.title()} is your strongest channel ({mods[lead]}/100) but {weak} is nearly absent ({mods[weak]}/100). "
-            f"Add a strong {weak} cue in the first 2 seconds — a visual hook, key phrase, or sound that signals what the video is about."
-        )
-    else:
-        headline = f"Hook scores {hook['overall']}/100 — room to improve before the 3s scroll threshold."
-        fix = (
-            f"{lead.title()} is your strongest hook channel ({mods[lead]}/100). "
-            f"Lead with your most compelling {lead} cue in the first 2 seconds."
-        )
-
-    return {
-        "headline": headline,
-        "evidence": {
-            "hook_overall": hook["overall"],
-            "hook_modalities": mods,
-            "hook_dips": hook_dips,
+        "pacing_alert": {
+            "available": pacing.get("available"),
+            "summary": pacing.get("summary") or pacing.get("reason"),
+            "first_warning": (pacing.get("long_hold_warnings") or [None])[0],
         },
-        "suggested_fix": fix,
     }
-
-
-def is_slow_burn(overall: np.ndarray) -> bool:
-    """True when activation rises monotonically or near-monotonically across the clip."""
-    if overall.size < 4:
-        return False
-    diffs = np.diff(overall)
-    return float((diffs > 0).mean()) >= 0.75
 
 
 def feature_cards(
@@ -393,7 +448,7 @@ def feature_cards(
     dips: list[dict[str, Any]],
     cta: dict[str, Any],
     balance: dict[str, Any],
-    overall: np.ndarray | None = None,
+    pacing: dict[str, Any],
 ) -> dict[str, Any]:
     first_dip = dips[0] if dips else None
     hook = windows["hook"]
@@ -403,25 +458,9 @@ def feature_cards(
         if hook["overall"] is not None and close["overall"] is not None
         else None
     )
-
-    slow_burn = is_slow_burn(overall) if overall is not None else False
-    payoff_late = payoff_delta is not None and payoff_delta >= 25
-
-    if slow_burn:
-        payoff_headline = "Slow-burn pattern: predicted attention climbs across the entire clip but starts very low."
-        payoff_fix = (
-            "Move your strongest idea, reveal, or hook to the first 2–3 seconds. "
-            "Short-form viewers decide to scroll within 2s — the payoff arriving at the end means most won't reach it."
-        )
-    elif payoff_late:
-        payoff_headline = "The payoff appears to land late."
-        payoff_fix = "Move the strongest idea, reveal, or contrast into the first 2-3 seconds."
-    else:
-        payoff_headline = "The payoff timing is not clearly late from this run."
-        payoff_fix = "Compare against more clips to establish a baseline."
+    first_pacing_warning = (pacing.get("long_hold_warnings") or [None])[0]
 
     return {
-        "hook": hook_card(windows, dips),
         "engagement_autopsy": {
             "headline": (
                 f"Predicted engagement drops around {first_dip['start']:.1f}s."
@@ -436,14 +475,17 @@ def feature_cards(
             ),
         },
         "payoff_timing": {
-            "headline": payoff_headline,
+            "headline": (
+                "The payoff appears to land late."
+                if payoff_delta is not None and payoff_delta >= 25
+                else "The payoff timing is not clearly late from this run."
+            ),
             "evidence": {
                 "hook_overall": hook["overall"],
                 "close_overall": close["overall"],
                 "close_minus_hook": payoff_delta,
-                "slow_burn": slow_burn,
             },
-            "suggested_fix": payoff_fix,
+            "suggested_fix": "Move the strongest idea, reveal, or contrast into the first 2-3 seconds.",
         },
         "modality_balance": {
             "headline": balance["verdict"],
@@ -455,16 +497,25 @@ def feature_cards(
             ),
         },
         "cta_window": {
-            "headline": (
-                f"No strong CTA window found before the final stretch — attention peaks too late."
-                if cta.get("too_late")
-                else f"Best CTA moment is around {cta['start']:.1f}–{cta['end']:.1f}s ({cta.get('pct_through_clip', '?')}% through the clip)."
-            ),
+            "headline": f"Best local payoff/CTA moment is around {cta['start']:.1f}-{cta['end']:.1f}s.",
             "evidence": cta,
+            "suggested_fix": "Use this timing for payoff placement, or move this moment earlier if it lands too late for short-form retention.",
+        },
+        "pacing_alert": {
+            "headline": (
+                f"Long hold from {first_pacing_warning['start']:.1f}-{first_pacing_warning['end']:.1f}s lines up with a signal drop."
+                if first_pacing_warning
+                else pacing.get("summary") or "Pacing analysis unavailable."
+            ),
+            "evidence": first_pacing_warning or {
+                "available": pacing.get("available"),
+                "reason": pacing.get("reason"),
+                "scene_cuts": pacing.get("scene_cuts", []),
+            },
             "suggested_fix": (
-                "Restructure so a high-attention moment lands in the middle third of the clip — that's where CTA placement works for short-form."
-                if cta.get("too_late")
-                else "Place your payoff or CTA call here. If this moment is too early, it signals the clip has good structure."
+                first_pacing_warning["suggested_fix"]
+                if first_pacing_warning
+                else "Run scene detection with the source video to add pacing markers."
             ),
         },
     }
@@ -475,66 +526,34 @@ def creator_insights(
     dips: list[dict[str, Any]],
     balance: dict[str, Any],
     cta: dict[str, Any],
-    overall: np.ndarray | None = None,
 ) -> list[dict[str, str]]:
     insights = []
 
     hook = windows["hook"]
     close = windows["close"]
-    slow_burn = is_slow_burn(overall) if overall is not None else False
-
-    if slow_burn:
-        insights.append(
-            {
-                "title": "Slow-burn pattern — hook is too weak",
-                "detail": (
-                    f"Predicted attention rises across the entire clip (hook: {hook['overall']}/100 → close: {close['overall']}/100). "
-                    "Short-form viewers scroll within 2s. Move the strongest moment to the opening."
-                ),
-            }
-        )
-    elif hook["overall"] is not None and close["overall"] is not None and close["overall"] - hook["overall"] >= 25:
-        insights.append(
-            {
-                "title": "The payoff arrives late",
-                "detail": (
-                    f"The close scores {close['overall']}/100 while the hook scores "
-                    f"{hook['overall']}/100. Move the strongest idea earlier."
-                ),
-            }
-        )
-
-    # Hook modality breakdown — surface which channel is carrying vs. missing the hook.
-    if hook["overall"] is not None:
-        mods = hook["modalities"]
-        lead = max(mods, key=lambda m: mods[m] if mods[m] is not None else -1)
-        weak = min(mods, key=lambda m: mods[m] if mods[m] is not None else 999)
-        if mods[weak] is not None and mods[lead] is not None and mods[lead] - mods[weak] >= 15:
+    if hook["overall"] is not None and close["overall"] is not None:
+        if close["overall"] - hook["overall"] >= 25:
             insights.append(
                 {
-                    "title": f"Hook is {lead}-led, {weak} is nearly absent",
+                    "title": "The payoff arrives late",
                     "detail": (
-                        f"In the first 3s: {lead}={mods[lead]}/100, {weak}={mods[weak]}/100. "
-                        f"Add a {weak} cue early — a visual hook, key phrase, or audio signal — "
-                        "to engage viewers across all channels before they scroll."
+                        f"The close scores {close['overall']}/100 while the hook scores "
+                        f"{hook['overall']}/100. Move the strongest idea earlier."
                     ),
                 }
             )
 
-    hook_dips = [d for d in dips if d["end"] <= 3.0]
-    mid_dips = [d for d in dips if d["start"] >= 3.0]
-    for dip_group, label in ((hook_dips, "hook"), (mid_dips, "mid-video")):
-        if dip_group:
-            first = dip_group[0]
-            insights.append(
-                {
-                    "title": f"Attention dip at {first['start']:.1f}s ({label})",
-                    "detail": (
-                        f"Overall signal drops {abs(first['overall_delta']):.0f} pts, led by "
-                        f"{first['lead_modality']} (−{abs(first['modality_deltas'][first['lead_modality']]):.0f} pts)."
-                    ),
-                }
-            )
+    if dips:
+        first = dips[0]
+        insights.append(
+            {
+                "title": f"Attention dip around {first['start']:.1f}s",
+                "detail": (
+                    f"Overall signal drops {abs(first['overall_delta'])}/100, led by "
+                    f"{first['lead_modality']}."
+                ),
+            }
+        )
 
     insights.append(
         {
@@ -542,21 +561,12 @@ def creator_insights(
             "detail": balance["verdict"],
         }
     )
-
-    if cta.get("too_late"):
-        insights.append(
-            {
-                "title": "No CTA window before the end",
-                "detail": "No high-attention moment was found before the final stretch. Restructure so a strong moment lands in the middle third of the clip.",
-            }
-        )
-    else:
-        insights.append(
-            {
-                "title": "Best payoff window",
-                "detail": f"Strongest early high-attention moment is around {cta['start']:.1f}–{cta['end']:.1f}s ({cta.get('pct_through_clip', '?')}% through).",
-            }
-        )
+    insights.append(
+        {
+            "title": "Best payoff window",
+            "detail": f"Strongest combined moment is around {cta['start']:.1f}-{cta['end']:.1f}s.",
+        }
+    )
     return insights
 
 
@@ -569,6 +579,7 @@ def llm_context(
     moments: dict[str, list[dict[str, Any]]],
     cards: dict[str, Any],
     movers: dict[str, Any] | None,
+    pacing: dict[str, Any],
     result: dict[str, Any],
 ) -> dict[str, Any]:
     event_info = result.get("events") or {}
@@ -591,6 +602,7 @@ def llm_context(
         "dips": dips,
         "cta_window": cta,
         "modality_balance": balance,
+        "pacing_alert": pacing,
         "event_context": events,
         "parcel_evidence": {
             "top_rising": (movers or {}).get("top_rising", [])[:5],
@@ -602,6 +614,7 @@ def llm_context(
             "Scores are normalized within this clip; do not describe them as universal retention percentages.",
             "When giving a fix, tie it to a timestamp, modality, or window from the evidence.",
             "If event dataframe records are unavailable, do not claim exact source event text/audio/video rows.",
+            "For pacing, only mention scene cuts or held shots when pacing_alert.available is true.",
         ],
         "output_style": {
             "match_reference": "Use the same shape as results/finance_test_clip_analysis.md.",
@@ -622,7 +635,11 @@ def llm_context(
     }
 
 
-def analyze(result_path: Path, mapping_path: Path | None = DEFAULT_MAPPING_PATH) -> dict[str, Any]:
+def analyze(
+    result_path: Path,
+    mapping_path: Path | None = DEFAULT_MAPPING_PATH,
+    video_path: Path | None = None,
+) -> dict[str, Any]:
     result = load_json(result_path)
     mapping = load_json(mapping_path) if mapping_path and mapping_path.exists() else None
     tracks = get_tracks(result)
@@ -645,9 +662,10 @@ def analyze(result_path: Path, mapping_path: Path | None = DEFAULT_MAPPING_PATH)
     balance = modality_balance(tracks)
     cta = cta_window(overall, normalized_tracks, segments)
     moments = ranked_moments(overall, normalized_tracks, segments)
+    pacing = pacing_alert(video_path, segments, overall, normalized_tracks, dips)
     movers = parcel_movers(result, mapping)
-    cards = feature_cards(windows, dips, cta, balance, overall)
-    evidence = evidence_summary(windows, dips, cta, balance, moments, overall)
+    cards = feature_cards(windows, dips, cta, balance, pacing)
+    evidence = evidence_summary(windows, dips, cta, balance, moments, pacing)
 
     return {
         "source": str(result_path),
@@ -672,12 +690,13 @@ def analyze(result_path: Path, mapping_path: Path | None = DEFAULT_MAPPING_PATH)
         "dips": dips,
         "cta_window": cta,
         "modality_balance": balance,
+        "pacing_alert": pacing,
         "parcel_movers": movers,
         "event_context": event_context(result),
         "feature_cards": cards,
         "evidence_summary": evidence,
-        "creator_insights": creator_insights(windows, dips, balance, cta, overall),
-        "llm_context": llm_context(result_path, windows, dips, cta, balance, moments, cards, movers, result),
+        "creator_insights": creator_insights(windows, dips, balance, cta),
+        "llm_context": llm_context(result_path, windows, dips, cta, balance, moments, cards, movers, pacing, result),
         "notes": [
             "Scores are normalized within this clip and should be read as relative timing signals, not universal retention percentages.",
             "This analysis is deterministic and does not use an LLM. Feed llm_context into an LLM to generate polished human-facing coaching.",
@@ -698,10 +717,15 @@ def main() -> None:
         default=DEFAULT_MAPPING_PATH,
         help="Path to Schaefer modality mapping JSON.",
     )
+    parser.add_argument(
+        "--video",
+        type=Path,
+        help="Source video path for optional PySceneDetect pacing analysis.",
+    )
     parser.add_argument("--output", type=Path, help="Output insights JSON path.")
     args = parser.parse_args()
 
-    insights = analyze(args.result_json, args.mapping)
+    insights = analyze(args.result_json, args.mapping, args.video)
     output = args.output or default_output_path(args.result_json)
     with output.open("w") as f:
         json.dump(insights, f, indent=2)

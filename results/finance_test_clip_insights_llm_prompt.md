@@ -17,6 +17,7 @@ Rules:
 - Scores are normalized within this clip. Do not call them universal retention percentages.
 - Give concrete creator advice tied to timestamps, modalities, windows, or feature cards.
 - If `event_context.available` is false, do not claim exact extracted event-row causes.
+- Only mention scene cuts or held shots when `pacing_alert.available` is true.
 - Do not translate Schaefer parcel labels into precise named brain regions without a separate translation layer.
 - Keep it concise, practical, and demo-ready.
 
@@ -83,6 +84,62 @@ Evidence packet:
       },
       "dominant": "language",
       "verdict": "Language-heavy: this clip is carried most by language signal."
+    },
+    "pacing_alert": {
+      "available": true,
+      "summary": "1 long hold(s) align with a predicted engagement drop.",
+      "first_warning": {
+        "scene_index": 0,
+        "start": 0.0,
+        "end": 3.933,
+        "duration": 3.933,
+        "timesteps": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "overall_start": 28.4,
+        "overall_end": 14.9,
+        "overall_delta": -13.5,
+        "lead_modality": "audio",
+        "modality_deltas": {
+          "visual": -10.3,
+          "audio": -40.1,
+          "language": 10.0
+        },
+        "aligned_dips": [
+          {
+            "timestep": 1,
+            "start": 1.0,
+            "end": 2.0,
+            "overall_before": 28.4,
+            "overall_after": 10.7,
+            "overall_delta": -17.7,
+            "lead_modality": "visual",
+            "modality_deltas": {
+              "visual": -27.1,
+              "audio": -21.7,
+              "language": -4.4
+            }
+          },
+          {
+            "timestep": 2,
+            "start": 2.0,
+            "end": 3.0,
+            "overall_before": 10.7,
+            "overall_after": 2.8,
+            "overall_delta": -7.9,
+            "lead_modality": "audio",
+            "modality_deltas": {
+              "visual": -8.2,
+              "audio": -20.0,
+              "language": 4.5
+            }
+          }
+        ],
+        "suggested_fix": "Add a visual change, cutaway, caption contrast, or delivery shift before 3.9s."
+      }
     }
   },
   "feature_cards": {
@@ -137,6 +194,62 @@ Evidence packet:
         "note": "Best local moment for payoff/CTA based on combined normalized activation."
       },
       "suggested_fix": "Use this timing for payoff placement, or move this moment earlier if it lands too late for short-form retention."
+    },
+    "pacing_alert": {
+      "headline": "Long hold from 0.0-3.9s lines up with a signal drop.",
+      "evidence": {
+        "scene_index": 0,
+        "start": 0.0,
+        "end": 3.933,
+        "duration": 3.933,
+        "timesteps": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "overall_start": 28.4,
+        "overall_end": 14.9,
+        "overall_delta": -13.5,
+        "lead_modality": "audio",
+        "modality_deltas": {
+          "visual": -10.3,
+          "audio": -40.1,
+          "language": 10.0
+        },
+        "aligned_dips": [
+          {
+            "timestep": 1,
+            "start": 1.0,
+            "end": 2.0,
+            "overall_before": 28.4,
+            "overall_after": 10.7,
+            "overall_delta": -17.7,
+            "lead_modality": "visual",
+            "modality_deltas": {
+              "visual": -27.1,
+              "audio": -21.7,
+              "language": -4.4
+            }
+          },
+          {
+            "timestep": 2,
+            "start": 2.0,
+            "end": 3.0,
+            "overall_before": 10.7,
+            "overall_after": 2.8,
+            "overall_delta": -7.9,
+            "lead_modality": "audio",
+            "modality_deltas": {
+              "visual": -8.2,
+              "audio": -20.0,
+              "language": 4.5
+            }
+          }
+        ],
+        "suggested_fix": "Add a visual change, cutaway, caption contrast, or delivery shift before 3.9s."
+      },
+      "suggested_fix": "Add a visual change, cutaway, caption contrast, or delivery shift before 3.9s."
     }
   },
   "ranked_moments": {
@@ -307,6 +420,95 @@ Evidence packet:
     },
     "dominant": "language",
     "verdict": "Language-heavy: this clip is carried most by language signal."
+  },
+  "pacing_alert": {
+    "available": true,
+    "reason": null,
+    "video_path": "test_clips\\finance_test_clip.mp4",
+    "threshold": 27.0,
+    "scene_intervals": [
+      {
+        "start": 0.0,
+        "end": 3.933,
+        "duration": 3.933
+      },
+      {
+        "start": 3.933,
+        "end": 5.9,
+        "duration": 1.967
+      },
+      {
+        "start": 5.9,
+        "end": 9.533,
+        "duration": 3.633
+      },
+      {
+        "start": 9.533,
+        "end": 10.5,
+        "duration": 0.967
+      }
+    ],
+    "scene_cuts": [
+      3.933,
+      5.9,
+      9.533
+    ],
+    "hold_threshold_seconds": 2.5,
+    "long_hold_warnings": [
+      {
+        "scene_index": 0,
+        "start": 0.0,
+        "end": 3.933,
+        "duration": 3.933,
+        "timesteps": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "overall_start": 28.4,
+        "overall_end": 14.9,
+        "overall_delta": -13.5,
+        "lead_modality": "audio",
+        "modality_deltas": {
+          "visual": -10.3,
+          "audio": -40.1,
+          "language": 10.0
+        },
+        "aligned_dips": [
+          {
+            "timestep": 1,
+            "start": 1.0,
+            "end": 2.0,
+            "overall_before": 28.4,
+            "overall_after": 10.7,
+            "overall_delta": -17.7,
+            "lead_modality": "visual",
+            "modality_deltas": {
+              "visual": -27.1,
+              "audio": -21.7,
+              "language": -4.4
+            }
+          },
+          {
+            "timestep": 2,
+            "start": 2.0,
+            "end": 3.0,
+            "overall_before": 10.7,
+            "overall_after": 2.8,
+            "overall_delta": -7.9,
+            "lead_modality": "audio",
+            "modality_deltas": {
+              "visual": -8.2,
+              "audio": -20.0,
+              "language": 4.5
+            }
+          }
+        ],
+        "suggested_fix": "Add a visual change, cutaway, caption contrast, or delivery shift before 3.9s."
+      }
+    ],
+    "summary": "1 long hold(s) align with a predicted engagement drop."
   },
   "parcel_evidence": {
     "top_rising": [

@@ -18,6 +18,73 @@ Upload a video. Resonate runs it through **Tribe v2** (Meta's fMRI brain encodin
 
 ---
 
+## New feature idea
+
+I would position it less as a "brain map" and more as a Brain Network Timeline.
+
+The problem with lighting up 200 Schaefer regions is that judges won't know what they're looking at. The moment you aggregate into interpretable networks, the feature becomes understandable.
+
+Feature: Brain Network Timeline
+
+Description
+
+Visualize how different cognitive systems are engaged throughout a video. Rather than displaying raw cortical regions, Resonate groups Schaefer-200 activations into color-coded brain networks and shows how they rise and fall over time.
+
+Each second of the video is mapped to the dominant cognitive systems being activated:
+
+Network	Color	What it represents
+Visual Network	Blue	Processing imagery, motion, scene changes
+Auditory Network	Green	Processing sound, music, voice
+Language Network	Red	Processing words, captions, narration
+Attention Network	Yellow	Sustained focus and engagement
+Salience Network	Orange	Novelty, surprise, emotionally important moments
+Executive Control Network	Purple	Higher-order reasoning and decision making
+User Experience
+
+As the video plays:
+
+0:03
+🟦 Visual spikes
+→ Fast scene change
+
+0:08
+🟨 Attention drops
+→ Viewer likely begins disengaging
+
+0:11
+🟧 Salience spike
+→ Unexpected event captures attention
+
+0:18
+🟥 Language dominates
+→ Heavy information density
+
+The brain visualization lights up regions on a cortical map, while the timeline below shows which networks are responsible.
+
+Why This Is Valuable
+
+Instead of saying:
+
+"Parcel 137 activation decreased by 23%"
+
+Resonate can say:
+
+"Your Attention Network collapses 5 seconds before your CTA."
+
+or
+
+"Top-performing videos in this niche maintain stronger Salience Network activation during the first 8 seconds."
+
+That's a much stronger creator insight.
+
+Demo Pitch
+
+Brain Network Timeline shows which cognitive systems are active at every moment of a video. By color-coding Schaefer-200 brain regions into interpretable networks like Visual, Language, Attention, and Salience, creators can see not only where engagement drops, but why it drops.
+
+I would honestly make Attention Network and Salience Network the stars of the show. Most competitors can tell creators where viewers leave. Resonate can claim to show which cognitive systems stopped engaging the viewer before they left. That's the differentiator.
+
+---
+
 ## Per-Modality Breakdown — Default Everywhere
 
 Every score, dip, comparison, and Blueprint similarity in Resonate is broken down into **three modality tracks**:

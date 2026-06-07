@@ -18,7 +18,7 @@ For detailed debugging notes, command outcomes, and exploratory analysis, use `L
 
 - `modal_test/test_inference.py` requires an explicit video path.
 - `modal_test/test_final.py` targets `test_clips/finance_test_clip.mp4` and persists output.
-- Both inference scripts check for existing `results/<video_stem>.json` or `results/<video_stem>.npz` before calling Modal and skip the run if artifacts already exist.
+- Both inference scripts check for existing repo-local `results/<video_stem>.json` or `results/<video_stem>.npz` before calling Modal and skip the run if artifacts already exist. Pass `--force` to intentionally spend a new Modal run.
 - This guard exists to conserve Modal credits.
 
 ## Backend Capture Schema
@@ -34,6 +34,7 @@ For detailed debugging notes, command outcomes, and exploratory analysis, use `L
   - `analysis/resonate_analysis.py`
 - It converts saved inference JSON into product-ready insights without Modal or LLM calls.
 - It now includes an `llm_context` evidence packet for later human-facing LLM coaching.
+- It now supports optional local PySceneDetect Pacing Alert analysis when passed `--video`; this adds scene cuts, long-hold warnings, and a `pacing_alert` feature card without Modal calls.
 - Added `analysis/resonate_llm_prompt.py` to create a finance-analysis-style prompt from insights JSON.
 - Added `analysis/resonate_llm_insights.py` to generate markdown creator coaching via OpenAI. Assume `OPENAI_API_KEY` is available; `--dry-run` is only for local smoke tests.
 - Current output path pattern:
