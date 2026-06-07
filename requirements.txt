@@ -2,3 +2,4 @@ modal
 nibabel
 numpy
 openai
+scenedetect

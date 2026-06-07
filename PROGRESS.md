@@ -34,6 +34,7 @@ For detailed debugging notes, command outcomes, and exploratory analysis, use `L
   - `analysis/resonate_analysis.py`
 - It converts saved inference JSON into product-ready insights without Modal or LLM calls.
 - It now includes an `llm_context` evidence packet for later human-facing LLM coaching.
+- It now supports optional local PySceneDetect Pacing Alert analysis when passed `--video`; this adds scene cuts, long-hold warnings, and a `pacing_alert` feature card without Modal calls.
 - Added `analysis/resonate_llm_prompt.py` to create a finance-analysis-style prompt from insights JSON.
 - Added `analysis/resonate_llm_insights.py` to generate markdown creator coaching via OpenAI. Assume `OPENAI_API_KEY` is available; `--dry-run` is only for local smoke tests.
 - Current output path pattern:

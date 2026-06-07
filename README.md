@@ -91,6 +91,14 @@ This writes `results/finance_test_clip_insights.json`.
 
 The analyzer is deterministic. It produces an `llm_context` evidence packet that can be fed to an LLM later for polished creator-facing coaching.
 
+Add the source video path to enable local PySceneDetect pacing alerts:
+
+```bash
+python3 analysis/resonate_analysis.py results/finance_test_clip.json --video test_clips/finance_test_clip.mp4
+```
+
+This adds scene cuts, long-hold warnings, and a Pacing Alert feature card to the insights JSON without calling Modal.
+
 Build the prompt for that LLM pass:
 
 ```bash

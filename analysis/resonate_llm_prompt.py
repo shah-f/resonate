@@ -27,6 +27,7 @@ def build_prompt(insights: dict) -> str:
         "dips": insights.get("dips"),
         "cta_window": insights.get("cta_window"),
         "modality_balance": insights.get("modality_balance"),
+        "pacing_alert": insights.get("pacing_alert"),
         "parcel_evidence": llm_context.get("parcel_evidence"),
         "event_context": insights.get("event_context"),
         "notes": insights.get("notes"),
@@ -51,6 +52,7 @@ Rules:
 - Scores are normalized within this clip. Do not call them universal retention percentages.
 - Give concrete creator advice tied to timestamps, modalities, windows, or feature cards.
 - If `event_context.available` is false, do not claim exact extracted event-row causes.
+- Only mention scene cuts or held shots when `pacing_alert.available` is true.
 - Do not translate Schaefer parcel labels into precise named brain regions without a separate translation layer.
 - Keep it concise, practical, and demo-ready.
 

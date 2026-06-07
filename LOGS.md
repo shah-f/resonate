@@ -294,6 +294,32 @@ Validation:
 - `python3 -m py_compile modal_test/test_inference.py`
 - `python3 modal_test/test_inference.py --help`
 
+## 2026-06-07 - Pacing Alert Added To Local Analyzer
+
+Added optional PySceneDetect-based pacing analysis to:
+
+- `analysis/resonate_analysis.py`
+- `analysis/resonate_llm_prompt.py`
+- `requirements.txt`
+- `README.md`
+- `PROGRESS.md`
+
+Behavior:
+
+- `analysis/resonate_analysis.py` now accepts `--video`.
+- When PySceneDetect and the source video are available, it detects scene intervals/cuts locally.
+- It flags long scene holds that align with predicted overall activation drops or detected dips.
+- It writes a `pacing_alert` block and a `feature_cards.pacing_alert` card into the insights JSON.
+- If no video path or no `scenedetect` package is available, the analyzer still runs and records why pacing was unavailable.
+
+Expected command:
+
+```bash
+python3 analysis/resonate_analysis.py results/finance_test_clip.json --video test_clips/finance_test_clip.mp4
+```
+
+No Modal calls are made by this path.
+
 ## 2026-06-07 - Modal Credit Guard
 
 Added local artifact guards before Modal calls in:

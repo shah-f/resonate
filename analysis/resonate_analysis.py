@@ -3,7 +3,7 @@
 This is deterministic analysis code. It does not call Modal or an LLM.
 
 Usage:
-    python3 analysis/resonate_analysis.py results/finance_test_clip.json
+    python3 analysis/resonate_analysis.py results/finance_test_clip.json --video test_clips/finance_test_clip.mp4
 """
 from __future__ import annotations
 
@@ -218,6 +218,145 @@ def ranked_moments(
     }
 
 
+def detect_scene_intervals(video_path: Path, threshold: float = 27.0) -> dict[str, Any]:
+    """Detect scene intervals with PySceneDetect when it is installed."""
+    if not video_path.exists():
+        return {
+            "available": False,
+            "reason": f"Video not found: {video_path}",
+            "video_path": str(video_path),
+            "scene_intervals": [],
+            "scene_cuts": [],
+        }
+
+    try:
+        from scenedetect import SceneManager, open_video
+        from scenedetect.detectors import ContentDetector
+    except ImportError:
+        return {
+            "available": False,
+            "reason": "PySceneDetect is not installed. Install the 'scenedetect' package to enable pacing alerts.",
+            "video_path": str(video_path),
+            "scene_intervals": [],
+            "scene_cuts": [],
+        }
+
+    video = open_video(str(video_path))
+    scene_manager = SceneManager()
+    scene_manager.add_detector(ContentDetector(threshold=threshold))
+    scene_manager.detect_scenes(video)
+    scene_list = scene_manager.get_scene_list()
+
+    intervals = []
+    for start, end in scene_list:
+        start_s = float(start.seconds)
+        end_s = float(end.seconds)
+        intervals.append(
+            {
+                "start": round(start_s, 3),
+                "end": round(end_s, 3),
+                "duration": round(max(0.0, end_s - start_s), 3),
+            }
+        )
+
+    if not intervals and video.duration is not None:
+        duration = float(video.duration.seconds)
+        intervals = [{"start": 0.0, "end": round(duration, 3), "duration": round(duration, 3)}]
+
+    return {
+        "available": True,
+        "reason": None,
+        "video_path": str(video_path),
+        "threshold": threshold,
+        "scene_intervals": intervals,
+        "scene_cuts": [scene["start"] for scene in intervals[1:]],
+    }
+
+
+def pacing_alert(
+    video_path: Path | None,
+    segments: list[dict[str, float]],
+    overall: np.ndarray,
+    normalized_tracks: dict[str, np.ndarray],
+    dips: list[dict[str, Any]],
+    hold_threshold_seconds: float = 2.5,
+) -> dict[str, Any]:
+    if video_path is None:
+        return {
+            "available": False,
+            "reason": "No video path was provided. Pass --video to enable scene-cut pacing analysis.",
+            "scene_cuts": [],
+            "scene_intervals": [],
+            "long_hold_warnings": [],
+        }
+
+    scene_data = detect_scene_intervals(video_path)
+    if not scene_data["available"]:
+        return {
+            **scene_data,
+            "hold_threshold_seconds": hold_threshold_seconds,
+            "long_hold_warnings": [],
+        }
+
+    warnings = []
+    centers = np.asarray([(s["start"] + s["end"]) / 2.0 for s in segments], dtype=float)
+
+    for scene_index, scene in enumerate(scene_data["scene_intervals"]):
+        indices = [
+            int(i)
+            for i, center in enumerate(centers)
+            if scene["start"] <= center < scene["end"]
+        ]
+        if len(indices) < 2 or scene["duration"] < hold_threshold_seconds:
+            continue
+
+        first_idx = indices[0]
+        last_idx = indices[-1]
+        overall_delta = float(overall[last_idx] - overall[first_idx])
+        dips_inside = [
+            dip
+            for dip in dips
+            if scene["start"] <= float(dip["start"]) < scene["end"]
+        ]
+        if overall_delta > -8.0 and not dips_inside:
+            continue
+
+        modality_deltas = {
+            m: round(float(normalized_tracks[m][last_idx] - normalized_tracks[m][first_idx]), 1)
+            for m in MODALITIES
+        }
+        lead_modality = min(modality_deltas, key=modality_deltas.get)
+        warnings.append(
+            {
+                "scene_index": scene_index,
+                "start": scene["start"],
+                "end": scene["end"],
+                "duration": scene["duration"],
+                "timesteps": indices,
+                "overall_start": round(float(overall[first_idx]), 1),
+                "overall_end": round(float(overall[last_idx]), 1),
+                "overall_delta": round(overall_delta, 1),
+                "lead_modality": lead_modality,
+                "modality_deltas": modality_deltas,
+                "aligned_dips": dips_inside,
+                "suggested_fix": (
+                    f"Add a visual change, cutaway, caption contrast, or delivery shift before {scene['end']:.1f}s."
+                ),
+            }
+        )
+
+    return {
+        **scene_data,
+        "hold_threshold_seconds": hold_threshold_seconds,
+        "long_hold_warnings": warnings,
+        "summary": (
+            f"{len(warnings)} long hold(s) align with a predicted engagement drop."
+            if warnings
+            else "No long scene holds aligned with predicted engagement drops."
+        ),
+    }
+
+
 def parcel_movers(result: dict[str, Any], mapping: dict[str, Any] | None, top_n: int = 8) -> dict[str, Any] | None:
     parcels_raw = result.get("parcels")
     if not parcels_raw:
@@ -276,6 +415,7 @@ def evidence_summary(
     cta: dict[str, Any],
     balance: dict[str, Any],
     moments: dict[str, list[dict[str, Any]]],
+    pacing: dict[str, Any],
 ) -> dict[str, Any]:
     hook = windows["hook"]
     close = windows["close"]
@@ -295,6 +435,11 @@ def evidence_summary(
         "weakest_moment": moments["weakest"][0] if moments["weakest"] else None,
         "cta_window": cta,
         "modality_balance": balance,
+        "pacing_alert": {
+            "available": pacing.get("available"),
+            "summary": pacing.get("summary") or pacing.get("reason"),
+            "first_warning": (pacing.get("long_hold_warnings") or [None])[0],
+        },
     }
 
 
@@ -303,6 +448,7 @@ def feature_cards(
     dips: list[dict[str, Any]],
     cta: dict[str, Any],
     balance: dict[str, Any],
+    pacing: dict[str, Any],
 ) -> dict[str, Any]:
     first_dip = dips[0] if dips else None
     hook = windows["hook"]
@@ -312,6 +458,7 @@ def feature_cards(
         if hook["overall"] is not None and close["overall"] is not None
         else None
     )
+    first_pacing_warning = (pacing.get("long_hold_warnings") or [None])[0]
 
     return {
         "engagement_autopsy": {
@@ -353,6 +500,23 @@ def feature_cards(
             "headline": f"Best local payoff/CTA moment is around {cta['start']:.1f}-{cta['end']:.1f}s.",
             "evidence": cta,
             "suggested_fix": "Use this timing for payoff placement, or move this moment earlier if it lands too late for short-form retention.",
+        },
+        "pacing_alert": {
+            "headline": (
+                f"Long hold from {first_pacing_warning['start']:.1f}-{first_pacing_warning['end']:.1f}s lines up with a signal drop."
+                if first_pacing_warning
+                else pacing.get("summary") or "Pacing analysis unavailable."
+            ),
+            "evidence": first_pacing_warning or {
+                "available": pacing.get("available"),
+                "reason": pacing.get("reason"),
+                "scene_cuts": pacing.get("scene_cuts", []),
+            },
+            "suggested_fix": (
+                first_pacing_warning["suggested_fix"]
+                if first_pacing_warning
+                else "Run scene detection with the source video to add pacing markers."
+            ),
         },
     }
 
@@ -415,6 +579,7 @@ def llm_context(
     moments: dict[str, list[dict[str, Any]]],
     cards: dict[str, Any],
     movers: dict[str, Any] | None,
+    pacing: dict[str, Any],
     result: dict[str, Any],
 ) -> dict[str, Any]:
     event_info = result.get("events") or {}
@@ -437,6 +602,7 @@ def llm_context(
         "dips": dips,
         "cta_window": cta,
         "modality_balance": balance,
+        "pacing_alert": pacing,
         "event_context": events,
         "parcel_evidence": {
             "top_rising": (movers or {}).get("top_rising", [])[:5],
@@ -448,6 +614,7 @@ def llm_context(
             "Scores are normalized within this clip; do not describe them as universal retention percentages.",
             "When giving a fix, tie it to a timestamp, modality, or window from the evidence.",
             "If event dataframe records are unavailable, do not claim exact source event text/audio/video rows.",
+            "For pacing, only mention scene cuts or held shots when pacing_alert.available is true.",
         ],
         "output_style": {
             "match_reference": "Use the same shape as results/finance_test_clip_analysis.md.",
@@ -468,7 +635,11 @@ def llm_context(
     }
 
 
-def analyze(result_path: Path, mapping_path: Path | None = DEFAULT_MAPPING_PATH) -> dict[str, Any]:
+def analyze(
+    result_path: Path,
+    mapping_path: Path | None = DEFAULT_MAPPING_PATH,
+    video_path: Path | None = None,
+) -> dict[str, Any]:
     result = load_json(result_path)
     mapping = load_json(mapping_path) if mapping_path and mapping_path.exists() else None
     tracks = get_tracks(result)
@@ -491,9 +662,10 @@ def analyze(result_path: Path, mapping_path: Path | None = DEFAULT_MAPPING_PATH)
     balance = modality_balance(tracks)
     cta = cta_window(overall, normalized_tracks, segments)
     moments = ranked_moments(overall, normalized_tracks, segments)
+    pacing = pacing_alert(video_path, segments, overall, normalized_tracks, dips)
     movers = parcel_movers(result, mapping)
-    cards = feature_cards(windows, dips, cta, balance)
-    evidence = evidence_summary(windows, dips, cta, balance, moments)
+    cards = feature_cards(windows, dips, cta, balance, pacing)
+    evidence = evidence_summary(windows, dips, cta, balance, moments, pacing)
 
     return {
         "source": str(result_path),
@@ -518,12 +690,13 @@ def analyze(result_path: Path, mapping_path: Path | None = DEFAULT_MAPPING_PATH)
         "dips": dips,
         "cta_window": cta,
         "modality_balance": balance,
+        "pacing_alert": pacing,
         "parcel_movers": movers,
         "event_context": event_context(result),
         "feature_cards": cards,
         "evidence_summary": evidence,
         "creator_insights": creator_insights(windows, dips, balance, cta),
-        "llm_context": llm_context(result_path, windows, dips, cta, balance, moments, cards, movers, result),
+        "llm_context": llm_context(result_path, windows, dips, cta, balance, moments, cards, movers, pacing, result),
         "notes": [
             "Scores are normalized within this clip and should be read as relative timing signals, not universal retention percentages.",
             "This analysis is deterministic and does not use an LLM. Feed llm_context into an LLM to generate polished human-facing coaching.",
@@ -544,10 +717,15 @@ def main() -> None:
         default=DEFAULT_MAPPING_PATH,
         help="Path to Schaefer modality mapping JSON.",
     )
+    parser.add_argument(
+        "--video",
+        type=Path,
+        help="Source video path for optional PySceneDetect pacing analysis.",
+    )
     parser.add_argument("--output", type=Path, help="Output insights JSON path.")
     args = parser.parse_args()
 
-    insights = analyze(args.result_json, args.mapping)
+    insights = analyze(args.result_json, args.mapping, args.video)
     output = args.output or default_output_path(args.result_json)
     with output.open("w") as f:
         json.dump(insights, f, indent=2)
