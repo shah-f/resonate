@@ -4,11 +4,13 @@ Usage:
     python modal_test/test_inference.py path/to/video.mp4
 """
 import argparse
+import json
 import os
 from pathlib import Path
 
 
-RESULTS_DIR = Path("/Users/foramshah/brain/results")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+RESULTS_DIR = PROJECT_ROOT / "results"
 
 
 def existing_result_paths(video_path):
@@ -20,11 +22,45 @@ def existing_result_paths(video_path):
     return [path for path in candidates if path.exists()]
 
 
+def print_cached_summary(existing_paths):
+    print("Inference already exists for this video. Skipping Modal run.")
+    print("Existing artifact(s):")
+    for path in existing_paths:
+        print(f"  {path}")
+
+    json_paths = [path for path in existing_paths if path.suffix == ".json"]
+    if not json_paths:
+        return
+
+    with json_paths[0].open("r", encoding="utf-8") as f:
+        result = json.load(f)
+
+    print("Cached summary:")
+    if "shape" in result:
+        print(f"  Prediction shape: {result['shape']} (timesteps x vertices)")
+    if "events" in result:
+        print(f"  Events shape: {result['events'].get('shape')}")
+    if "segments_parsed" in result:
+        print(f"  Parsed segments: {len(result['segments_parsed'])}")
+    if "modality" in result:
+        print("  Modality tracks:")
+        for modality in ("visual", "audio", "language"):
+            values = result["modality"].get(modality, [])
+            print(f"    {modality}: {len(values)} timesteps")
+    if "parcels" in result and result["parcels"]:
+        print(f"  Parcels shape: {len(result['parcels'])} timesteps x {len(result['parcels'][0])} regions")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run deployed Resonate inference on a video.")
     parser.add_argument(
         "video_path",
         help="Path to a local video file.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Call Modal even when results/<video_stem>.json or .npz already exists.",
     )
     args = parser.parse_args()
 
@@ -33,12 +69,11 @@ def main():
         raise FileNotFoundError(f"Video not found: {video_path}")
 
     existing_paths = existing_result_paths(video_path)
-    if existing_paths:
-        print("Inference already exists for this video. Skipping Modal run.")
-        print("Existing artifact(s):")
-        for path in existing_paths:
-            print(f"  {path}")
+    if existing_paths and not args.force:
+        print_cached_summary(existing_paths)
         return
+    if existing_paths and args.force:
+        print("Existing artifact(s) found, but --force was provided. Calling Modal anyway.")
 
     import modal
 

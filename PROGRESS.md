@@ -18,7 +18,7 @@ For detailed debugging notes, command outcomes, and exploratory analysis, use `L
 
 - `modal_test/test_inference.py` requires an explicit video path.
 - `modal_test/test_final.py` targets `test_clips/finance_test_clip.mp4` and persists output.
-- Both inference scripts check for existing `results/<video_stem>.json` or `results/<video_stem>.npz` before calling Modal and skip the run if artifacts already exist.
+- Both inference scripts check for existing repo-local `results/<video_stem>.json` or `results/<video_stem>.npz` before calling Modal and skip the run if artifacts already exist. Pass `--force` to intentionally spend a new Modal run.
 - This guard exists to conserve Modal credits.
 
 ## Backend Capture Schema
