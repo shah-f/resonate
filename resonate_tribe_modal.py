@@ -8,7 +8,7 @@ volume = modal.Volume.from_name("tribe-model-cache", create_if_missing=True)
 # Model weights are downloaded during image build and baked in — no download at inference time
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .apt_install("git", "ffmpeg", "libx265-dev", "libx264-dev")
+    .apt_install("git", "ffmpeg", "libavcodec-extra", "libx265-dev", "libx264-dev")
     .run_commands(
         "git clone https://github.com/facebookresearch/tribev2 /tribev2",
         "pip install 'exca==0.5.25'",  # pin before tribev2 install — exca 0.5.26 breaks neuralset
@@ -457,6 +457,9 @@ def main():
 # and is visible to all horizontally-scaled instances.
 
 _job_dict = modal.Dict.from_name("resonate-jobs", create_if_missing=True)
+# content_hash -> job_id, so identical re-uploads reuse a job instead of firing
+# another paid Modal run. Shared across web containers via modal.Dict.
+_content_index = modal.Dict.from_name("resonate-content-index", create_if_missing=True)
 
 _web_image = (
     image
@@ -493,9 +496,29 @@ def _run_analysis_job(job_id: str, video_bytes: bytes, filename: str) -> None:
         job.update({"message": msg, "progress": progress})
         _job_dict[job_id] = job
 
+    import threading, time
+
     try:
+        # run_tribe blocks ~5-6 min with no internal progress signal. Creep the bar
+        # 0.05 -> ~0.48 on a timer so the UI shows movement instead of sitting frozen
+        # at 5%. Stops the moment inference returns.
         update("Running Tribe v2...", 0.05)
-        result = run_tribe.remote(video_bytes, filename)
+        _creep_msgs = ["Running Tribe v2...", "Mapping cortical vertices...", "Applying Schaefer-200 atlas..."]
+        _stop = threading.Event()
+
+        def _creep(expected_secs: float = 360.0) -> None:
+            start = time.time()
+            while not _stop.wait(2.0):
+                frac = min((time.time() - start) / expected_secs, 1.0)
+                update(_creep_msgs[min(int(frac * 3), 2)], 0.05 + 0.43 * frac)
+
+        _ticker = threading.Thread(target=_creep, daemon=True)
+        _ticker.start()
+        try:
+            result = run_tribe.remote(video_bytes, filename)
+        finally:
+            _stop.set()
+            _ticker.join(timeout=3)
 
         update("Mapping Schaefer-200 atlas...", 0.5)
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as f:
@@ -568,18 +591,37 @@ def api():
 
     @web_app.post("/analyze")
     async def analyze(video: UploadFile = File(...)):
-        job_id = str(uuid.uuid4())
+        import hashlib
         video_bytes = await video.read()
-        _job_dict[job_id] = {"status": "processing", "message": "Initializing...", "progress": 0.0}
+        # Key by CONTENT hash, not a random uuid. This is what stops the deployed
+        # app from launching a brand-new (paid, ~6 min) Modal run on every double
+        # click / page reload / identical re-upload — it reuses the in-flight or
+        # finished job instead. The mapping lives in the shared modal.Dict so it
+        # survives across web containers.
+        content_hash = hashlib.sha256(video_bytes).hexdigest()[:16]
+        existing_job_id = _content_index.get(content_hash)
+        if existing_job_id:
+            job = _job_dict.get(existing_job_id)
+            if job and job.get("status") in ("processing", "complete"):
+                return {"jobId": existing_job_id, "deduped": True}
+
+        import time
+        job_id = str(uuid.uuid4())
+        _job_dict[job_id] = {"status": "processing", "message": "Initializing...", "progress": 0.0, "started_at": time.time()}
+        _content_index[content_hash] = job_id
         # Spawn as a tracked Modal function — survives after the HTTP response returns
         _run_analysis_job.spawn(job_id, video_bytes, video.filename or "video.mp4")
         return {"jobId": job_id}
 
     @web_app.get("/status/{job_id}")
     def get_status(job_id: str):
+        import time
         job = _job_dict.get(job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
+        # Auto-expire jobs stuck processing for > 12 min (Modal function timeout is 10 min)
+        if job["status"] == "processing" and time.time() - job.get("started_at", time.time()) > 720:
+            return {"status": "error", "message": "Analysis timed out — please try again.", "progress": 0}
         return {
             "status": job["status"],
             "message": job.get("message", ""),
