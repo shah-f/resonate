@@ -59,41 +59,54 @@ export default function Home() {
           <CardContent className="p-0">
             <div
               {...getRootProps()}
-              className={`p-12 border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center text-center gap-4 ${
+              className={`relative min-h-[30rem] overflow-hidden border-2 border-dashed transition-colors cursor-pointer flex flex-col justify-between text-center px-8 py-10 sm:px-12 sm:py-12 ${
                 isDragActive
                   ? "border-primary bg-primary/5"
                   : "border-muted-border hover:border-primary/50 hover:bg-muted/20"
               }`}
             >
               <input {...getInputProps()} />
-              {file ? (
-                <>
-                  <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+              <div className="relative z-10 flex flex-col items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-muted/80 flex items-center justify-center">
+                  {file ? (
                     <Video className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-lg font-medium text-white">{file.name}</p>
+                  ) : (
+                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-lg sm:text-xl font-medium text-white">
+                    {file ? file.name : "Drag & drop your vertical video"}
+                  </p>
+                  {file ? (
                     <p className="text-sm text-muted-foreground">
                       {(file.size / (1024 * 1024)).toFixed(2)} MB
                     </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-2">
-                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-lg font-medium text-white">
-                      Drag &amp; drop your vertical video
-                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="relative z-10 flex flex-1 items-center justify-center py-4">
+                <div className="pointer-events-none relative flex h-36 w-36 items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-primary/15 blur-3xl" />
+                  <div className="absolute inset-5 rounded-full border border-primary/35 bg-background/30 shadow-[0_0_0_1px_rgba(59,130,246,0.15),0_0_48px_rgba(59,130,246,0.18)]" />
+                  <div className="absolute inset-10 rounded-full bg-background/90 border border-primary/40" />
+                </div>
+              </div>
+
+              <div className="relative z-10 flex flex-col items-center gap-2">
+                {!file ? (
+                  <>
                     <p className="text-sm text-muted-foreground">Supports .mp4, .mov, .webm</p>
-                    <p className="text-xs text-primary mt-2">
-                      Short vertical clips work best for the demo.
+                    <p className="text-xs text-primary">Short, 10-15s clips work best.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Brain analysis takes a while: 5-10 mins.
                     </p>
-                  </div>
-                </>
-              )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Ready to analyze this clip.</p>
+                )}
+              </div>
             </div>
 
             {file && (
