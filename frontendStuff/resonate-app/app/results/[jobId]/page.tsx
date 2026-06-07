@@ -9,7 +9,8 @@ import { ProcessingView } from "@/components/processing-view";
 import { VideoPlayer } from "@/components/video-player";
 import { AttentionTimeline } from "@/components/attention-timeline";
 import { ModalityTracks } from "@/components/modality-tracks";
-import { MainTakeaway } from "@/components/main-takeaway";
+import { MissionHeader } from "@/components/mission-header";
+import { MomentStory } from "@/components/moment-story";
 import { CreatorFeedback } from "@/components/creator-feedback";
 import { FeatureCard } from "@/components/feature-card";
 import { EvidenceDrawer } from "@/components/evidence-drawer";
@@ -122,7 +123,8 @@ export default function ResultsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        <MainTakeaway result={result} />
+        <MissionHeader result={result} onSeek={handleSeek} />
+        <MomentStory result={result} onSeek={handleSeek} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-5 space-y-6 flex flex-col">

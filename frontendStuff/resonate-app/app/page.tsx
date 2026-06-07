@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UploadCloud, Video, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CosmicBackdrop } from "@/components/cosmic-backdrop";
 
 export default function Home() {
   const router = useRouter();
@@ -40,7 +41,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
+    <div className="relative min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
+      <CosmicBackdrop />
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center space-y-4">
           <h1 className="text-5xl font-bold tracking-tight text-white">Resonate</h1>
