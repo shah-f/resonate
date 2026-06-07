@@ -77,7 +77,7 @@ Both inference scripts first check `results/` for an existing `<video_stem>.json
 
 ## Operational Notes
 
-- This workspace is not currently a git repo.
+- This workspace is a git repo connected to `https://github.com/shah-f/resonate.git`.
 - Modal inference requires configured Modal auth and the `huggingface-token` secret.
 - Remote inference may incur GPU time and depends on large model downloads/caches.
 - `results/` and `__pycache__/` are generated artifacts.
