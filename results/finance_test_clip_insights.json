@@ -268,16 +268,18 @@
     }
   ],
   "cta_window": {
-    "timestep": 10,
-    "start": 10.0,
-    "end": 11.0,
-    "overall": 100.0,
+    "timestep": 9,
+    "start": 9.0,
+    "end": 10.0,
+    "overall": 62.3,
     "modalities": {
-      "visual": 100.0,
-      "audio": 100.0,
-      "language": 100.0
+      "visual": 73.9,
+      "audio": 48.0,
+      "language": 65.1
     },
-    "note": "Best local moment for payoff/CTA based on combined normalized activation."
+    "pct_through_clip": 82,
+    "too_late": false,
+    "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
   },
   "modality_balance": {
     "shares": {
@@ -383,6 +385,48 @@
     "usage_note": "No Tribe event dataframe was saved for this result; do not claim event-row-specific causes."
   },
   "feature_cards": {
+    "hook": {
+      "headline": "Hook collapses at 1s \u2014 predicted attention drops 18 pts, led by visual.",
+      "evidence": {
+        "hook_overall": 14.0,
+        "hook_modalities": {
+          "visual": 14.5,
+          "audio": 24.6,
+          "language": 3.0
+        },
+        "hook_dips": [
+          {
+            "timestep": 1,
+            "start": 1.0,
+            "end": 2.0,
+            "overall_before": 28.4,
+            "overall_after": 10.7,
+            "overall_delta": -17.7,
+            "lead_modality": "visual",
+            "modality_deltas": {
+              "visual": -27.1,
+              "audio": -21.7,
+              "language": -4.4
+            }
+          },
+          {
+            "timestep": 2,
+            "start": 2.0,
+            "end": 3.0,
+            "overall_before": 10.7,
+            "overall_after": 2.8,
+            "overall_delta": -7.9,
+            "lead_modality": "audio",
+            "modality_deltas": {
+              "visual": -8.2,
+              "audio": -20.0,
+              "language": 4.5
+            }
+          }
+        ]
+      },
+      "suggested_fix": "Your hook scores 14.0/100 overall. Audio is your strongest channel (24.6/100) but language is nearly absent (3.0/100). Add a strong language cue in the first 2 seconds \u2014 a visual hook, key phrase, or sound that signals what the video is about."
+    },
     "engagement_autopsy": {
       "headline": "Predicted engagement drops around 1.0s.",
       "evidence": {
@@ -406,7 +450,8 @@
       "evidence": {
         "hook_overall": 14.0,
         "close_overall": 65.8,
-        "close_minus_hook": 51.8
+        "close_minus_hook": 51.8,
+        "slow_burn": false
       },
       "suggested_fix": "Move the strongest idea, reveal, or contrast into the first 2-3 seconds."
     },
@@ -420,25 +465,29 @@
       "suggested_fix": "If the clip is too language-heavy, add visual proof, b-roll, captions with contrast, or clearer scene changes."
     },
     "cta_window": {
-      "headline": "Best local payoff/CTA moment is around 10.0-11.0s.",
+      "headline": "Best CTA moment is around 9.0\u201310.0s (82% through the clip).",
       "evidence": {
-        "timestep": 10,
-        "start": 10.0,
-        "end": 11.0,
-        "overall": 100.0,
+        "timestep": 9,
+        "start": 9.0,
+        "end": 10.0,
+        "overall": 62.3,
         "modalities": {
-          "visual": 100.0,
-          "audio": 100.0,
-          "language": 100.0
+          "visual": 73.9,
+          "audio": 48.0,
+          "language": 65.1
         },
-        "note": "Best local moment for payoff/CTA based on combined normalized activation."
+        "pct_through_clip": 82,
+        "too_late": false,
+        "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
       },
-      "suggested_fix": "Use this timing for payoff placement, or move this moment earlier if it lands too late for short-form retention."
+      "suggested_fix": "Place your payoff or CTA call here. If this moment is too early, it signals the clip has good structure."
     }
   },
   "evidence_summary": {
     "main_story": "The strongest combined activation arrives near the end, while the hook is weak.",
+    "slow_burn": false,
     "payoff_delta_close_minus_hook": 51.8,
+    "cta_too_late": false,
     "first_major_dip": {
       "timestep": 1,
       "start": 1.0,
@@ -476,16 +525,18 @@
       }
     },
     "cta_window": {
-      "timestep": 10,
-      "start": 10.0,
-      "end": 11.0,
-      "overall": 100.0,
+      "timestep": 9,
+      "start": 9.0,
+      "end": 10.0,
+      "overall": 62.3,
       "modalities": {
-        "visual": 100.0,
-        "audio": 100.0,
-        "language": 100.0
+        "visual": 73.9,
+        "audio": 48.0,
+        "language": 65.1
       },
-      "note": "Best local moment for payoff/CTA based on combined normalized activation."
+      "pct_through_clip": 82,
+      "too_late": false,
+      "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
     },
     "modality_balance": {
       "shares": {
@@ -503,8 +554,12 @@
       "detail": "The close scores 65.8/100 while the hook scores 14.0/100. Move the strongest idea earlier."
     },
     {
-      "title": "Attention dip around 1.0s",
-      "detail": "Overall signal drops 17.7/100, led by visual."
+      "title": "Hook is audio-led, language is nearly absent",
+      "detail": "In the first 3s: audio=24.6/100, language=3.0/100. Add a language cue early \u2014 a visual hook, key phrase, or audio signal \u2014 to engage viewers across all channels before they scroll."
+    },
+    {
+      "title": "Attention dip at 1.0s (hook)",
+      "detail": "Overall signal drops 18 pts, led by visual (\u221227 pts)."
     },
     {
       "title": "Modality balance",
@@ -512,7 +567,7 @@
     },
     {
       "title": "Best payoff window",
-      "detail": "Strongest combined moment is around 10.0-11.0s."
+      "detail": "Strongest early high-attention moment is around 9.0\u201310.0s (82% through)."
     }
   ],
   "llm_context": {
@@ -527,6 +582,48 @@
       "tribe_event_dataframe": false
     },
     "feature_cards": {
+      "hook": {
+        "headline": "Hook collapses at 1s \u2014 predicted attention drops 18 pts, led by visual.",
+        "evidence": {
+          "hook_overall": 14.0,
+          "hook_modalities": {
+            "visual": 14.5,
+            "audio": 24.6,
+            "language": 3.0
+          },
+          "hook_dips": [
+            {
+              "timestep": 1,
+              "start": 1.0,
+              "end": 2.0,
+              "overall_before": 28.4,
+              "overall_after": 10.7,
+              "overall_delta": -17.7,
+              "lead_modality": "visual",
+              "modality_deltas": {
+                "visual": -27.1,
+                "audio": -21.7,
+                "language": -4.4
+              }
+            },
+            {
+              "timestep": 2,
+              "start": 2.0,
+              "end": 3.0,
+              "overall_before": 10.7,
+              "overall_after": 2.8,
+              "overall_delta": -7.9,
+              "lead_modality": "audio",
+              "modality_deltas": {
+                "visual": -8.2,
+                "audio": -20.0,
+                "language": 4.5
+              }
+            }
+          ]
+        },
+        "suggested_fix": "Your hook scores 14.0/100 overall. Audio is your strongest channel (24.6/100) but language is nearly absent (3.0/100). Add a strong language cue in the first 2 seconds \u2014 a visual hook, key phrase, or sound that signals what the video is about."
+      },
       "engagement_autopsy": {
         "headline": "Predicted engagement drops around 1.0s.",
         "evidence": {
@@ -550,7 +647,8 @@
         "evidence": {
           "hook_overall": 14.0,
           "close_overall": 65.8,
-          "close_minus_hook": 51.8
+          "close_minus_hook": 51.8,
+          "slow_burn": false
         },
         "suggested_fix": "Move the strongest idea, reveal, or contrast into the first 2-3 seconds."
       },
@@ -564,20 +662,22 @@
         "suggested_fix": "If the clip is too language-heavy, add visual proof, b-roll, captions with contrast, or clearer scene changes."
       },
       "cta_window": {
-        "headline": "Best local payoff/CTA moment is around 10.0-11.0s.",
+        "headline": "Best CTA moment is around 9.0\u201310.0s (82% through the clip).",
         "evidence": {
-          "timestep": 10,
-          "start": 10.0,
-          "end": 11.0,
-          "overall": 100.0,
+          "timestep": 9,
+          "start": 9.0,
+          "end": 10.0,
+          "overall": 62.3,
           "modalities": {
-            "visual": 100.0,
-            "audio": 100.0,
-            "language": 100.0
+            "visual": 73.9,
+            "audio": 48.0,
+            "language": 65.1
           },
-          "note": "Best local moment for payoff/CTA based on combined normalized activation."
+          "pct_through_clip": 82,
+          "too_late": false,
+          "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
         },
-        "suggested_fix": "Use this timing for payoff placement, or move this moment earlier if it lands too late for short-form retention."
+        "suggested_fix": "Place your payoff or CTA call here. If this moment is too early, it signals the clip has good structure."
       }
     },
     "ranked_moments": {
@@ -729,16 +829,18 @@
       }
     ],
     "cta_window": {
-      "timestep": 10,
-      "start": 10.0,
-      "end": 11.0,
-      "overall": 100.0,
+      "timestep": 9,
+      "start": 9.0,
+      "end": 10.0,
+      "overall": 62.3,
       "modalities": {
-        "visual": 100.0,
-        "audio": 100.0,
-        "language": 100.0
+        "visual": 73.9,
+        "audio": 48.0,
+        "language": 65.1
       },
-      "note": "Best local moment for payoff/CTA based on combined normalized activation."
+      "pct_through_clip": 82,
+      "too_late": false,
+      "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
     },
     "modality_balance": {
       "shares": {

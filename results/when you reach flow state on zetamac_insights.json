@@ -1,0 +1,909 @@
+{
+  "source": "results/when you reach flow state on zetamac.json",
+  "schema_version": 2,
+  "n_timesteps": 14,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 1.0
+    },
+    {
+      "start": 1.0,
+      "end": 2.0
+    },
+    {
+      "start": 2.0,
+      "end": 3.0
+    },
+    {
+      "start": 3.0,
+      "end": 4.0
+    },
+    {
+      "start": 4.0,
+      "end": 5.0
+    },
+    {
+      "start": 5.0,
+      "end": 6.0
+    },
+    {
+      "start": 6.0,
+      "end": 7.0
+    },
+    {
+      "start": 7.0,
+      "end": 8.0
+    },
+    {
+      "start": 8.0,
+      "end": 9.0
+    },
+    {
+      "start": 9.0,
+      "end": 10.0
+    },
+    {
+      "start": 10.0,
+      "end": 11.0
+    },
+    {
+      "start": 11.0,
+      "end": 12.0
+    },
+    {
+      "start": 12.0,
+      "end": 13.0
+    },
+    {
+      "start": 13.0,
+      "end": 14.0
+    }
+  ],
+  "raw_track_stats": {
+    "visual": {
+      "min": -0.033768,
+      "max": 0.070324,
+      "mean": 0.020231
+    },
+    "audio": {
+      "min": 0.00419,
+      "max": 0.164974,
+      "mean": 0.089623
+    },
+    "language": {
+      "min": -0.047739,
+      "max": 0.050736,
+      "mean": -0.007018
+    }
+  },
+  "normalized_tracks": {
+    "visual": [
+      52.9,
+      47.4,
+      22.0,
+      31.2,
+      18.5,
+      28.9,
+      50.4,
+      60.5,
+      57.4,
+      83.7,
+      92.8,
+      100.0,
+      80.6,
+      0.0
+    ],
+    "audio": [
+      0.0,
+      3.5,
+      9.6,
+      49.3,
+      47.1,
+      44.5,
+      60.2,
+      62.2,
+      64.6,
+      68.5,
+      76.9,
+      82.7,
+      74.7,
+      100.0
+    ],
+    "language": [
+      18.7,
+      13.9,
+      0.0,
+      44.2,
+      32.6,
+      39.9,
+      53.1,
+      50.9,
+      25.3,
+      52.3,
+      44.9,
+      50.3,
+      53.0,
+      100.0
+    ]
+  },
+  "overall": [
+    23.9,
+    21.6,
+    10.5,
+    41.6,
+    32.7,
+    37.7,
+    54.6,
+    57.9,
+    49.1,
+    68.2,
+    71.5,
+    77.7,
+    69.4,
+    66.7
+  ],
+  "windows": {
+    "hook": {
+      "label": "0-3s hook",
+      "indices": [
+        0,
+        1,
+        2
+      ],
+      "overall": 18.7,
+      "modalities": {
+        "visual": 40.8,
+        "audio": 4.4,
+        "language": 10.9
+      }
+    },
+    "middle": {
+      "label": "3-8s middle",
+      "indices": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "overall": 44.9,
+      "modalities": {
+        "visual": 37.9,
+        "audio": 52.7,
+        "language": 44.1
+      }
+    },
+    "close": {
+      "label": "last 3s close",
+      "indices": [
+        11,
+        12,
+        13
+      ],
+      "overall": 71.3,
+      "modalities": {
+        "visual": 60.2,
+        "audio": 85.8,
+        "language": 67.7
+      }
+    }
+  },
+  "ranked_moments": {
+    "strongest": [
+      {
+        "timestep": 11,
+        "start": 11.0,
+        "end": 12.0,
+        "overall": 77.7,
+        "modalities": {
+          "visual": 100.0,
+          "audio": 82.7,
+          "language": 50.3
+        }
+      },
+      {
+        "timestep": 10,
+        "start": 10.0,
+        "end": 11.0,
+        "overall": 71.5,
+        "modalities": {
+          "visual": 92.8,
+          "audio": 76.9,
+          "language": 44.9
+        }
+      },
+      {
+        "timestep": 12,
+        "start": 12.0,
+        "end": 13.0,
+        "overall": 69.4,
+        "modalities": {
+          "visual": 80.6,
+          "audio": 74.7,
+          "language": 53.0
+        }
+      }
+    ],
+    "weakest": [
+      {
+        "timestep": 2,
+        "start": 2.0,
+        "end": 3.0,
+        "overall": 10.5,
+        "modalities": {
+          "visual": 22.0,
+          "audio": 9.6,
+          "language": 0.0
+        }
+      },
+      {
+        "timestep": 1,
+        "start": 1.0,
+        "end": 2.0,
+        "overall": 21.6,
+        "modalities": {
+          "visual": 47.4,
+          "audio": 3.5,
+          "language": 13.9
+        }
+      },
+      {
+        "timestep": 0,
+        "start": 0.0,
+        "end": 1.0,
+        "overall": 23.9,
+        "modalities": {
+          "visual": 52.9,
+          "audio": 0.0,
+          "language": 18.7
+        }
+      }
+    ]
+  },
+  "dips": [
+    {
+      "timestep": 2,
+      "start": 2.0,
+      "end": 3.0,
+      "overall_before": 21.6,
+      "overall_after": 10.5,
+      "overall_delta": -11.1,
+      "lead_modality": "visual",
+      "modality_deltas": {
+        "visual": -25.5,
+        "audio": 6.0,
+        "language": -13.9
+      }
+    }
+  ],
+  "cta_window": {
+    "timestep": 11,
+    "start": 11.0,
+    "end": 12.0,
+    "overall": 77.7,
+    "modalities": {
+      "visual": 100.0,
+      "audio": 82.7,
+      "language": 50.3
+    },
+    "pct_through_clip": 79,
+    "too_late": false,
+    "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
+  },
+  "modality_balance": {
+    "shares": {
+      "visual": 27.6,
+      "audio": 55.8,
+      "language": 16.5
+    },
+    "dominant": "audio",
+    "verdict": "Audio-heavy: this clip is carried most by audio signal."
+  },
+  "parcel_movers": {
+    "comparison": "last_3_timesteps_minus_first_3_timesteps",
+    "top_rising": [
+      {
+        "parcel_index": 108,
+        "parcel_name": "7Networks_RH_Vis_9",
+        "delta": 0.3916
+      },
+      {
+        "parcel_index": 12,
+        "parcel_name": "7Networks_LH_Vis_13",
+        "delta": 0.3105
+      },
+      {
+        "parcel_index": 112,
+        "parcel_name": "7Networks_RH_Vis_13",
+        "delta": 0.3017
+      },
+      {
+        "parcel_index": 188,
+        "parcel_name": "7Networks_RH_Default_Temp_5",
+        "delta": 0.2844
+      },
+      {
+        "parcel_index": 77,
+        "parcel_name": "7Networks_LH_Default_Temp_5",
+        "delta": 0.2759
+      },
+      {
+        "parcel_index": 9,
+        "parcel_name": "7Networks_LH_Vis_10",
+        "delta": 0.2666
+      },
+      {
+        "parcel_index": 3,
+        "parcel_name": "7Networks_LH_Vis_4",
+        "delta": 0.2551
+      },
+      {
+        "parcel_index": 103,
+        "parcel_name": "7Networks_RH_Vis_4",
+        "delta": 0.2482
+      }
+    ],
+    "top_falling": [
+      {
+        "parcel_index": 0,
+        "parcel_name": "7Networks_LH_Vis_1",
+        "delta": -0.278
+      },
+      {
+        "parcel_index": 101,
+        "parcel_name": "7Networks_RH_Vis_2",
+        "delta": -0.2699
+      },
+      {
+        "parcel_index": 8,
+        "parcel_name": "7Networks_LH_Vis_9",
+        "delta": -0.2634
+      },
+      {
+        "parcel_index": 110,
+        "parcel_name": "7Networks_RH_Vis_11",
+        "delta": -0.2123
+      },
+      {
+        "parcel_index": 107,
+        "parcel_name": "7Networks_RH_Vis_8",
+        "delta": -0.21
+      },
+      {
+        "parcel_index": 4,
+        "parcel_name": "7Networks_LH_Vis_5",
+        "delta": -0.2088
+      },
+      {
+        "parcel_index": 102,
+        "parcel_name": "7Networks_RH_Vis_3",
+        "delta": -0.1963
+      },
+      {
+        "parcel_index": 1,
+        "parcel_name": "7Networks_LH_Vis_2",
+        "delta": -0.1763
+      }
+    ]
+  },
+  "event_context": {
+    "available": false,
+    "shape": null,
+    "columns": [],
+    "sample_records": [],
+    "usage_note": "No Tribe event dataframe was saved for this result; do not claim event-row-specific causes."
+  },
+  "feature_cards": {
+    "hook": {
+      "headline": "Hook collapses at 2s \u2014 predicted attention drops 11 pts, led by visual.",
+      "evidence": {
+        "hook_overall": 18.7,
+        "hook_modalities": {
+          "visual": 40.8,
+          "audio": 4.4,
+          "language": 10.9
+        },
+        "hook_dips": [
+          {
+            "timestep": 2,
+            "start": 2.0,
+            "end": 3.0,
+            "overall_before": 21.6,
+            "overall_after": 10.5,
+            "overall_delta": -11.1,
+            "lead_modality": "visual",
+            "modality_deltas": {
+              "visual": -25.5,
+              "audio": 6.0,
+              "language": -13.9
+            }
+          }
+        ]
+      },
+      "suggested_fix": "Your hook scores 18.7/100 overall. Visual is your strongest channel (40.8/100) but audio is nearly absent (4.4/100). Add a strong audio cue in the first 2 seconds \u2014 a visual hook, key phrase, or sound that signals what the video is about."
+    },
+    "engagement_autopsy": {
+      "headline": "Predicted engagement drops around 2.0s.",
+      "evidence": {
+        "timestep": 2,
+        "start": 2.0,
+        "end": 3.0,
+        "overall_before": 21.6,
+        "overall_after": 10.5,
+        "overall_delta": -11.1,
+        "lead_modality": "visual",
+        "modality_deltas": {
+          "visual": -25.5,
+          "audio": 6.0,
+          "language": -13.9
+        }
+      },
+      "suggested_fix": "Strengthen the visual cue at this moment."
+    },
+    "payoff_timing": {
+      "headline": "The payoff appears to land late.",
+      "evidence": {
+        "hook_overall": 18.7,
+        "close_overall": 71.3,
+        "close_minus_hook": 52.6,
+        "slow_burn": false
+      },
+      "suggested_fix": "Move the strongest idea, reveal, or contrast into the first 2-3 seconds."
+    },
+    "modality_balance": {
+      "headline": "Audio-heavy: this clip is carried most by audio signal.",
+      "evidence": {
+        "visual": 27.6,
+        "audio": 55.8,
+        "language": 16.5
+      },
+      "suggested_fix": "Support the dominant modality with clearer visual, audio, and language cues."
+    },
+    "cta_window": {
+      "headline": "Best CTA moment is around 11.0\u201312.0s (79% through the clip).",
+      "evidence": {
+        "timestep": 11,
+        "start": 11.0,
+        "end": 12.0,
+        "overall": 77.7,
+        "modalities": {
+          "visual": 100.0,
+          "audio": 82.7,
+          "language": 50.3
+        },
+        "pct_through_clip": 79,
+        "too_late": false,
+        "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
+      },
+      "suggested_fix": "Place your payoff or CTA call here. If this moment is too early, it signals the clip has good structure."
+    }
+  },
+  "evidence_summary": {
+    "main_story": "The strongest combined activation arrives near the end, while the hook is weak.",
+    "slow_burn": false,
+    "payoff_delta_close_minus_hook": 52.6,
+    "cta_too_late": false,
+    "first_major_dip": {
+      "timestep": 2,
+      "start": 2.0,
+      "end": 3.0,
+      "overall_before": 21.6,
+      "overall_after": 10.5,
+      "overall_delta": -11.1,
+      "lead_modality": "visual",
+      "modality_deltas": {
+        "visual": -25.5,
+        "audio": 6.0,
+        "language": -13.9
+      }
+    },
+    "strongest_moment": {
+      "timestep": 11,
+      "start": 11.0,
+      "end": 12.0,
+      "overall": 77.7,
+      "modalities": {
+        "visual": 100.0,
+        "audio": 82.7,
+        "language": 50.3
+      }
+    },
+    "weakest_moment": {
+      "timestep": 2,
+      "start": 2.0,
+      "end": 3.0,
+      "overall": 10.5,
+      "modalities": {
+        "visual": 22.0,
+        "audio": 9.6,
+        "language": 0.0
+      }
+    },
+    "cta_window": {
+      "timestep": 11,
+      "start": 11.0,
+      "end": 12.0,
+      "overall": 77.7,
+      "modalities": {
+        "visual": 100.0,
+        "audio": 82.7,
+        "language": 50.3
+      },
+      "pct_through_clip": 79,
+      "too_late": false,
+      "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
+    },
+    "modality_balance": {
+      "shares": {
+        "visual": 27.6,
+        "audio": 55.8,
+        "language": 16.5
+      },
+      "dominant": "audio",
+      "verdict": "Audio-heavy: this clip is carried most by audio signal."
+    }
+  },
+  "creator_insights": [
+    {
+      "title": "The payoff arrives late",
+      "detail": "The close scores 71.3/100 while the hook scores 18.7/100. Move the strongest idea earlier."
+    },
+    {
+      "title": "Hook is visual-led, audio is nearly absent",
+      "detail": "In the first 3s: visual=40.8/100, audio=4.4/100. Add a audio cue early \u2014 a visual hook, key phrase, or audio signal \u2014 to engage viewers across all channels before they scroll."
+    },
+    {
+      "title": "Attention dip at 2.0s (hook)",
+      "detail": "Overall signal drops 11 pts, led by visual (\u221226 pts)."
+    },
+    {
+      "title": "Modality balance",
+      "detail": "Audio-heavy: this clip is carried most by audio signal."
+    },
+    {
+      "title": "Best payoff window",
+      "detail": "Strongest early high-attention moment is around 11.0\u201312.0s (79% through)."
+    }
+  ],
+  "llm_context": {
+    "purpose": "Use this evidence packet to write creator-facing coaching. Do not invent facts beyond the structured evidence.",
+    "source": "results/when you reach flow state on zetamac.json",
+    "input_data_available": {
+      "modality_tracks": true,
+      "overall_curve": true,
+      "segments": true,
+      "parcels": true,
+      "parcel_names": true,
+      "tribe_event_dataframe": false
+    },
+    "feature_cards": {
+      "hook": {
+        "headline": "Hook collapses at 2s \u2014 predicted attention drops 11 pts, led by visual.",
+        "evidence": {
+          "hook_overall": 18.7,
+          "hook_modalities": {
+            "visual": 40.8,
+            "audio": 4.4,
+            "language": 10.9
+          },
+          "hook_dips": [
+            {
+              "timestep": 2,
+              "start": 2.0,
+              "end": 3.0,
+              "overall_before": 21.6,
+              "overall_after": 10.5,
+              "overall_delta": -11.1,
+              "lead_modality": "visual",
+              "modality_deltas": {
+                "visual": -25.5,
+                "audio": 6.0,
+                "language": -13.9
+              }
+            }
+          ]
+        },
+        "suggested_fix": "Your hook scores 18.7/100 overall. Visual is your strongest channel (40.8/100) but audio is nearly absent (4.4/100). Add a strong audio cue in the first 2 seconds \u2014 a visual hook, key phrase, or sound that signals what the video is about."
+      },
+      "engagement_autopsy": {
+        "headline": "Predicted engagement drops around 2.0s.",
+        "evidence": {
+          "timestep": 2,
+          "start": 2.0,
+          "end": 3.0,
+          "overall_before": 21.6,
+          "overall_after": 10.5,
+          "overall_delta": -11.1,
+          "lead_modality": "visual",
+          "modality_deltas": {
+            "visual": -25.5,
+            "audio": 6.0,
+            "language": -13.9
+          }
+        },
+        "suggested_fix": "Strengthen the visual cue at this moment."
+      },
+      "payoff_timing": {
+        "headline": "The payoff appears to land late.",
+        "evidence": {
+          "hook_overall": 18.7,
+          "close_overall": 71.3,
+          "close_minus_hook": 52.6,
+          "slow_burn": false
+        },
+        "suggested_fix": "Move the strongest idea, reveal, or contrast into the first 2-3 seconds."
+      },
+      "modality_balance": {
+        "headline": "Audio-heavy: this clip is carried most by audio signal.",
+        "evidence": {
+          "visual": 27.6,
+          "audio": 55.8,
+          "language": 16.5
+        },
+        "suggested_fix": "Support the dominant modality with clearer visual, audio, and language cues."
+      },
+      "cta_window": {
+        "headline": "Best CTA moment is around 11.0\u201312.0s (79% through the clip).",
+        "evidence": {
+          "timestep": 11,
+          "start": 11.0,
+          "end": 12.0,
+          "overall": 77.7,
+          "modalities": {
+            "visual": 100.0,
+            "audio": 82.7,
+            "language": 50.3
+          },
+          "pct_through_clip": 79,
+          "too_late": false,
+          "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
+        },
+        "suggested_fix": "Place your payoff or CTA call here. If this moment is too early, it signals the clip has good structure."
+      }
+    },
+    "ranked_moments": {
+      "strongest": [
+        {
+          "timestep": 11,
+          "start": 11.0,
+          "end": 12.0,
+          "overall": 77.7,
+          "modalities": {
+            "visual": 100.0,
+            "audio": 82.7,
+            "language": 50.3
+          }
+        },
+        {
+          "timestep": 10,
+          "start": 10.0,
+          "end": 11.0,
+          "overall": 71.5,
+          "modalities": {
+            "visual": 92.8,
+            "audio": 76.9,
+            "language": 44.9
+          }
+        },
+        {
+          "timestep": 12,
+          "start": 12.0,
+          "end": 13.0,
+          "overall": 69.4,
+          "modalities": {
+            "visual": 80.6,
+            "audio": 74.7,
+            "language": 53.0
+          }
+        }
+      ],
+      "weakest": [
+        {
+          "timestep": 2,
+          "start": 2.0,
+          "end": 3.0,
+          "overall": 10.5,
+          "modalities": {
+            "visual": 22.0,
+            "audio": 9.6,
+            "language": 0.0
+          }
+        },
+        {
+          "timestep": 1,
+          "start": 1.0,
+          "end": 2.0,
+          "overall": 21.6,
+          "modalities": {
+            "visual": 47.4,
+            "audio": 3.5,
+            "language": 13.9
+          }
+        },
+        {
+          "timestep": 0,
+          "start": 0.0,
+          "end": 1.0,
+          "overall": 23.9,
+          "modalities": {
+            "visual": 52.9,
+            "audio": 0.0,
+            "language": 18.7
+          }
+        }
+      ]
+    },
+    "window_summary": {
+      "hook": {
+        "label": "0-3s hook",
+        "indices": [
+          0,
+          1,
+          2
+        ],
+        "overall": 18.7,
+        "modalities": {
+          "visual": 40.8,
+          "audio": 4.4,
+          "language": 10.9
+        }
+      },
+      "middle": {
+        "label": "3-8s middle",
+        "indices": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "overall": 44.9,
+        "modalities": {
+          "visual": 37.9,
+          "audio": 52.7,
+          "language": 44.1
+        }
+      },
+      "close": {
+        "label": "last 3s close",
+        "indices": [
+          11,
+          12,
+          13
+        ],
+        "overall": 71.3,
+        "modalities": {
+          "visual": 60.2,
+          "audio": 85.8,
+          "language": 67.7
+        }
+      }
+    },
+    "dips": [
+      {
+        "timestep": 2,
+        "start": 2.0,
+        "end": 3.0,
+        "overall_before": 21.6,
+        "overall_after": 10.5,
+        "overall_delta": -11.1,
+        "lead_modality": "visual",
+        "modality_deltas": {
+          "visual": -25.5,
+          "audio": 6.0,
+          "language": -13.9
+        }
+      }
+    ],
+    "cta_window": {
+      "timestep": 11,
+      "start": 11.0,
+      "end": 12.0,
+      "overall": 77.7,
+      "modalities": {
+        "visual": 100.0,
+        "audio": 82.7,
+        "language": 50.3
+      },
+      "pct_through_clip": 79,
+      "too_late": false,
+      "note": "Earliest high-attention moment; ideal for payoff or CTA placement."
+    },
+    "modality_balance": {
+      "shares": {
+        "visual": 27.6,
+        "audio": 55.8,
+        "language": 16.5
+      },
+      "dominant": "audio",
+      "verdict": "Audio-heavy: this clip is carried most by audio signal."
+    },
+    "event_context": {
+      "available": false,
+      "shape": null,
+      "columns": [],
+      "sample_records": [],
+      "usage_note": "No Tribe event dataframe was saved for this result; do not claim event-row-specific causes."
+    },
+    "parcel_evidence": {
+      "top_rising": [
+        {
+          "parcel_index": 108,
+          "parcel_name": "7Networks_RH_Vis_9",
+          "delta": 0.3916
+        },
+        {
+          "parcel_index": 12,
+          "parcel_name": "7Networks_LH_Vis_13",
+          "delta": 0.3105
+        },
+        {
+          "parcel_index": 112,
+          "parcel_name": "7Networks_RH_Vis_13",
+          "delta": 0.3017
+        },
+        {
+          "parcel_index": 188,
+          "parcel_name": "7Networks_RH_Default_Temp_5",
+          "delta": 0.2844
+        },
+        {
+          "parcel_index": 77,
+          "parcel_name": "7Networks_LH_Default_Temp_5",
+          "delta": 0.2759
+        }
+      ],
+      "top_falling": [
+        {
+          "parcel_index": 0,
+          "parcel_name": "7Networks_LH_Vis_1",
+          "delta": -0.278
+        },
+        {
+          "parcel_index": 101,
+          "parcel_name": "7Networks_RH_Vis_2",
+          "delta": -0.2699
+        },
+        {
+          "parcel_index": 8,
+          "parcel_name": "7Networks_LH_Vis_9",
+          "delta": -0.2634
+        },
+        {
+          "parcel_index": 110,
+          "parcel_name": "7Networks_RH_Vis_11",
+          "delta": -0.2123
+        },
+        {
+          "parcel_index": 107,
+          "parcel_name": "7Networks_RH_Vis_8",
+          "delta": -0.21
+        }
+      ],
+      "usage_note": "Use parcel labels as supporting atlas evidence only; do not translate them into precise named brain regions without a separate translation layer."
+    },
+    "recommended_language_rules": [
+      "Say 'predicted brain response' or 'signal suggests', not 'proves viewers will drop'.",
+      "Scores are normalized within this clip; do not describe them as universal retention percentages.",
+      "When giving a fix, tie it to a timestamp, modality, or window from the evidence.",
+      "If event dataframe records are unavailable, do not claim exact source event text/audio/video rows."
+    ],
+    "output_style": {
+      "match_reference": "Use the same shape as results/finance_test_clip_analysis.md.",
+      "sections": [
+        "What The Data Says",
+        "Human-Facing Insights We Could Give",
+        "Suggested Creator Feedback",
+        "Good Demo Cards For Resonate",
+        "Caveat"
+      ],
+      "tone": "Clear, concrete, creator-facing, careful about uncertainty."
+    },
+    "prompt_skeleton": "Write a concise markdown analysis with sections: What The Data Says, Human-Facing Insights We Could Give, Suggested Creator Feedback, Good Demo Cards For Resonate, and Caveat. Use only the evidence packet."
+  },
+  "notes": [
+    "Scores are normalized within this clip and should be read as relative timing signals, not universal retention percentages.",
+    "This analysis is deterministic and does not use an LLM. Feed llm_context into an LLM to generate polished human-facing coaching."
+  ]
+}

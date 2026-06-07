@@ -4,8 +4,11 @@ Usage:
     python modal_test/test_inference.py path/to/video.mp4
 """
 import argparse
+import json
 import os
 from pathlib import Path
+
+import numpy as np
 
 
 RESULTS_DIR = Path("/Users/foramshah/brain/results")
@@ -18,6 +21,32 @@ def existing_result_paths(video_path):
         RESULTS_DIR / f"{clip_name}.npz",
     ]
     return [path for path in candidates if path.exists()]
+
+
+def save_result(result, video_path):
+    clip_name = Path(video_path).stem
+    json_path = RESULTS_DIR / f"{clip_name}.json"
+    npz_path = RESULTS_DIR / f"{clip_name}.npz"
+
+    with json_path.open("w") as f:
+        json.dump(result, f)
+
+    np.savez_compressed(
+        npz_path,
+        predictions=np.asarray(result["predictions"], dtype=np.float32),
+        parcels=np.asarray(result.get("parcels", []), dtype=np.float32),
+        visual=np.asarray(result.get("modality", {}).get("visual", []), dtype=np.float32),
+        audio=np.asarray(result.get("modality", {}).get("audio", []), dtype=np.float32),
+        language=np.asarray(result.get("modality", {}).get("language", []), dtype=np.float32),
+        segments=np.asarray(result.get("segments", []), dtype=object),
+        segments_parsed=np.asarray(result.get("segments_parsed", []), dtype=object),
+        event_records=np.asarray(result.get("events", {}).get("records", []), dtype=object),
+        event_columns=np.asarray(result.get("events", {}).get("columns", []), dtype=object),
+        parcel_names=np.asarray(result.get("parcel_names", []), dtype=object),
+        modality_indices=np.asarray([result.get("modality_indices", {})], dtype=object),
+        metadata=np.asarray([result.get("metadata", {})], dtype=object),
+    )
+    return json_path, npz_path
 
 
 def main():
@@ -50,8 +79,11 @@ def main():
     print("Sending to Modal...")
 
     result = run_tribe.remote(video_bytes, os.path.basename(video_path))
+    json_path, npz_path = save_result(result, video_path)
 
     print("Inference complete.")
+    print(f"Saved full data: {json_path}")
+    print(f"Saved arrays: {npz_path}")
     print(f"Prediction shape: {result['shape']} (timesteps x vertices)")
     if "events" in result:
         print(f"Events shape: {result['events'].get('shape')}")
