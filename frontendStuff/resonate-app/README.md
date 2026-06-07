@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resonate — Frontend
 
-## Getting Started
+Next.js 16 app (App Router, React 19, Tailwind CSS v4, TypeScript).
 
-First, run the development server:
+## Setup
 
 ```bash
+cd frontendStuff/resonate-app
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The upload page loads immediately; click **"try the sample clip"** to see the full results dashboard without uploading a video.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> **After every `git pull`, re-run `npm install`** — dependencies may have changed and `node_modules` is not committed.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 3D Brain Visualization
 
-## Learn More
+The brain panel uses Three.js / WebGL. If it shows colored bars instead of a 3D brain:
 
-To learn more about Next.js, take a look at the following resources:
+- **Use Chrome or Firefox** — Safari disables WebGL by default. Enable it via *Develop → Experimental Features → WebGL* or just switch browsers.
+- The bars fallback is intentional for when the mock data doesn't include parcel scores. The sample clip mock data (`lib/mock/resonateResult.json`) has full parcel data, so the 3D brain should appear in Chrome/Firefox.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  page.tsx                  # Upload page
+  results/[jobId]/page.tsx  # Results dashboard
+  api/
+    analyze/route.ts        # Accepts video upload, returns jobId
+    status/[jobId]/route.ts # Job progress polling
+    results/[jobId]/route.ts# Returns analysis result
+  globals.css               # Theme (orange palette, custom classes)
+  layout.tsx / providers.tsx
 
-## Deploy on Vercel
+components/
+  mission-header.tsx        # Diagnosis headline + stat tiles + resonance gauge
+  moment-story.tsx          # Phase breakdown + attention event timeline
+  brain-visualization.tsx   # 3D Schaefer-200 parcel brain (Three.js)
+  attention-timeline.tsx    # Overall attention chart (Recharts)
+  modality-tracks.tsx       # Visual/audio/language chart (Recharts)
+  cosmic-backdrop.tsx       # Animated canvas backdrop (upload page)
+  processing-view.tsx       # Progress bar shown while job runs
+  creator-feedback.tsx      # LLM markdown feedback panel
+  feature-card.tsx          # Engagement/Payoff/Balance/CTA insight cards
+  evidence-drawer.tsx       # Debug accordion with raw data
+  video-player.tsx          # HTML5 video with seek sync
+  ui/                       # shadcn/ui primitives
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+lib/
+  types.ts                  # ResonateResult type — the backend/frontend contract
+  mock/resonateResult.json  # Full mock payload (used by /api/results in dev)
+  job-store.ts              # In-memory job store (replace for production)
+  utils.ts                  # cn() helper
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Connecting the Real Backend
+
+The three API routes currently return mock data. To connect to the Modal backend, update these files:
+
+| File | Current | Replace with |
+|------|---------|--------------|
+| `app/api/analyze/route.ts` | Stores job in memory | POST video to Modal `run_tribe` endpoint |
+| `app/api/status/[jobId]/route.ts` | Returns fake progress | Poll Modal for real job status |
+| `app/api/results/[jobId]/route.ts` | Returns `resonateResult.json` | Fetch real result from Modal/storage |
+
+The `ResonateResult` type in `lib/types.ts` is the expected shape — the backend response must match it.
