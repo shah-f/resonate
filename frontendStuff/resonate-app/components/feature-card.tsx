@@ -17,6 +17,13 @@ export function FeatureCard({ type, card, onSeek }: FeatureCardProps) {
     ctaWindow: <Target className="w-5 h-5 text-green-400" />
   };
 
+  const categoryLabels = {
+    engagementAutopsy: "Engagement",
+    payoffTiming: "Payoff",
+    modalityBalance: "Balance",
+    ctaWindow: "CTA Window"
+  };
+
   // Attempt to parse a timestamp from the suggestedFix or evidence to make a jump button
   // Real implementation might have structured start/end in the card object.
   const extractTime = (text: string): number | null => {
@@ -31,8 +38,9 @@ export function FeatureCard({ type, card, onSeek }: FeatureCardProps) {
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           {icons[type]}
-          <h3 className="font-semibold text-white text-sm" data-testid={`text-feature-headline-${type}`}>{card.headline}</h3>
+          <span className="label-mono text-[0.56rem] text-muted-foreground">{categoryLabels[type]}</span>
         </div>
+        <h3 className="font-semibold text-white text-sm leading-snug" data-testid={`text-feature-headline-${type}`}>{card.headline}</h3>
         
         {typeof card.evidence === 'string' && card.evidence.trim() && (
           <div className="text-sm text-muted-foreground leading-relaxed break-words" data-testid={`text-feature-evidence-${type}`}>
@@ -41,7 +49,7 @@ export function FeatureCard({ type, card, onSeek }: FeatureCardProps) {
         )}
         
         <div className="bg-muted/30 rounded p-3 text-sm text-white/90 border border-muted-border break-words" data-testid={`text-feature-fix-${type}`}>
-          <span className="font-medium text-primary mr-2">Fix:</span>
+          <span className="label-mono text-[0.56rem] text-primary mr-2">Fix</span>
           {card.suggestedFix}
         </div>
 
@@ -49,7 +57,7 @@ export function FeatureCard({ type, card, onSeek }: FeatureCardProps) {
           <Button 
             variant="secondary" 
             size="sm" 
-            className="w-full mt-2 text-xs h-8 bg-secondary/50 hover:bg-secondary"
+            className="label-mono w-full mt-2 text-[0.6rem] h-8 bg-secondary/50 hover:bg-secondary"
             onClick={() => onSeek(jumpTime)}
             data-testid={`button-feature-jump-${type}`}
           >

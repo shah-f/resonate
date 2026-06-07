@@ -5,9 +5,12 @@ interface AttentionTimelineProps {
   result: ResonateResult;
   currentTime: number;
   onSeek: (time: number) => void;
+  /** Render as a tall full-width "spine" backbone instead of a side panel */
+  tall?: boolean;
+  title?: string;
 }
 
-export function AttentionTimeline({ result, currentTime, onSeek }: AttentionTimelineProps) {
+export function AttentionTimeline({ result, currentTime, onSeek, tall = false, title = 'Overall Attention' }: AttentionTimelineProps) {
   const data = result.brain.segments.map((seg, i) => ({
     time: seg.start,
     displayTime: seg.start.toFixed(1) + 's',
@@ -27,8 +30,11 @@ export function AttentionTimeline({ result, currentTime, onSeek }: AttentionTime
   const maxTime = result.brain.segments[result.brain.segments.length - 1].end;
 
   return (
-    <div className="w-full h-56 bg-card border border-card-border rounded-lg p-4 pb-2 relative flex flex-col" data-testid="chart-attention-timeline">
-      <h3 className="text-sm font-medium text-muted-foreground mb-2">Overall Attention</h3>
+    <div className={`w-full ${tall ? 'h-72' : 'h-56'} bg-card border border-card-border p-4 pb-2 relative flex flex-col`} data-testid="chart-attention-timeline">
+      <div className="flex items-center gap-3 mb-2">
+        <h3 className={`label-mono text-[0.7rem] ${tall ? 'text-primary' : 'text-muted-foreground'}`}>{title}</h3>
+        {tall && <span className="h-px flex-1 bg-card-border" />}
+      </div>
       <div className="flex-1 min-h-0">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} onClick={handleClick} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>

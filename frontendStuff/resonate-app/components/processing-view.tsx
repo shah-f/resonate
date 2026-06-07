@@ -19,10 +19,12 @@ export function ProcessingView({ message, progress }: { message: string; progres
         </div>
         
         <div className="w-full space-y-4 text-center">
+          <p className="label-mono text-[0.6rem] text-primary text-glow">Predicting Brain Response</p>
           <h2 className="text-2xl font-medium text-white tracking-wide" data-testid="text-processing-message">
             {message}
           </h2>
           <Progress value={progress * 100} className="h-1 bg-muted" data-testid="progress-analysis" />
+          <p className="readout text-xs text-muted-foreground">{Math.round(progress * 100)}%</p>
         </div>
       </div>
     </div>

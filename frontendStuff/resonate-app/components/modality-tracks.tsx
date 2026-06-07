@@ -27,7 +27,7 @@ export function ModalityTracks({ result, currentTime, onSeek }: ModalityTracksPr
   return (
     <div className="w-full h-56 bg-card border border-card-border rounded-lg p-4 pb-2 relative flex flex-col" data-testid="chart-modality-tracks">
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-        <h3 className="text-sm font-medium text-muted-foreground">Modality Breakdown</h3>
+        <h3 className="label-mono text-[0.7rem] text-muted-foreground">Modality Breakdown</h3>
         <div className="flex gap-3 text-xs">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor: MODALITY_COLORS.visual}}></span> Visual</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor: MODALITY_COLORS.audio}}></span> Audio</span>
