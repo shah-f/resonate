@@ -1,5 +1,7 @@
 # Resonate
 
+**Live demo → [next-deploy.replit.app](https://next-deploy.replit.app)**
+
 **Know exactly where your video loses the brain.**
 
 Resonate runs your short-form video through Meta's Tribe v2 brain encoding model to predict second-by-second cortical activation across 20,000+ brain surface vertices. It maps those signals onto the Schaefer-200 neuroscience atlas, separates them into visual, audio, and language engagement tracks, and delivers creator-ready coaching — all in under two minutes.
